@@ -3,121 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>六行優惠券計算機</title>
+    <title>8大銀行優惠券計算機</title>
     <style>
         :root {
-            --primary-color: #3498db;
-            --bg-color: #f8f9fa;
+            --primary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
         }
         body {
             font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg-color);
             margin: 0;
-            padding: 15px;
+            padding: 10px;
             color: #333;
         }
         .container {
-            max-width: 900px;
+            max-width: 1100px;
             margin: auto;
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding-bottom: 120px; /* 為底部總計留空間 */
         }
         h1 {
             text-align: center;
-            color: #2c3e50;
-            font-size: 1.5rem;
-            margin-bottom: 20px;
+            color: var(--primary-color);
+            font-size: 1.4rem;
+            margin: 15px 0;
         }
+        /* 銀行卡片網格佈局 */
         .bank-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 12px;
         }
         .bank-card {
-            border: 1px solid #eee;
-            border-radius: 10px;
+            background: var(--card-bg);
+            border-radius: 12px;
             padding: 15px;
-            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border: 1px solid #e1e4e8;
         }
         .bank-name {
             font-weight: bold;
-            color: var(--primary-color);
-            border-bottom: 2px solid #f0f0f0;
-            margin-bottom: 10px;
-            padding-bottom: 5px;
-            display: flex;
-            justify-content: space-between;
+            font-size: 1.1rem;
+            color: #3498db;
+            border-left: 4px solid #3498db;
+            padding-left: 10px;
+            margin-bottom: 15px;
         }
+        /* 優惠券行佈局 */
         .coupon-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
+            padding: 5px 0;
+            border-bottom: 1px dashed #f0f0f0;
         }
-        .coupon-row label { font-size: 0.9rem; }
+        .coupon-row:last-child { border-bottom: none; }
+        .coupon-label { font-size: 0.95rem; color: #555; }
+        
+        /* 輸入框樣式 */
         input[type="number"] {
-            width: 60px;
-            padding: 5px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+            width: 65px;
+            padding: 6px;
+            border: 2px solid #eee;
+            border-radius: 8px;
             text-align: center;
             font-size: 1rem;
+            -webkit-appearance: none; /* 移除 iOS 默認樣式 */
         }
-        #summary {
-            margin-top: 25px;
-            padding: 15px;
-            background: #e1f5fe;
-            border-radius: 10px;
-            position: sticky;
-            bottom: 10px;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        input[type="number"]:focus {
+            border-color: #3498db;
+            outline: none;
         }
-        .result-item {
+
+        /* 底部固定總計欄 */
+        #summary-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #2c3e50;
+            color: white;
+            padding: 15px 20px;
+            box-shadow: 0 -3px 10px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 100;
+        }
+        .res-line {
             display: flex;
             justify-content: space-between;
-            margin: 5px 0;
-            font-size: 1.1rem;
+            align-items: center;
+            font-size: 1rem;
         }
-        .val { font-weight: bold; color: #d32f2f; }
+        .highlight {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #f1c40f;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+        }
         .reset-btn {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            margin-top: 10px;
-            background: #95a5a6;
+            flex: 1;
+            padding: 8px;
+            background: #7f8c8d;
             color: white;
             border: none;
-            border-radius: 5px;
-            font-size: 1rem;
-            cursor: pointer;
+            border-radius: 6px;
+            font-size: 0.9rem;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>消費抽獎優惠券計算機</h1>
+    <h1>消費抽獎優惠券紀錄 (8大銀行)</h1>
 
     <div id="bank-list" class="bank-grid">
         </div>
+</div>
 
-    <div id="summary">
-        <div class="result-item">
-            <span>優惠券總金額：</span>
-            <span>MOP <span id="total-discount" class="val">0</span></span>
-        </div>
-        <div class="result-item">
-            <span>需消費總金額：</span>
-            <span>MOP <span id="total-spend" class="val">0</span></span>
-        </div>
-        <button class="reset-btn" onclick="resetAll()">全部清空</button>
+<div id="summary-bar">
+    <div class="res-line">
+        <span>中獎總金額：</span>
+        <span>MOP <span id="total-discount" class="highlight">0</span></span>
+    </div>
+    <div class="res-line">
+        <span>需消費總額：</span>
+        <span>MOP <span id="total-spend" class="highlight">0</span></span>
+    </div>
+    <div class="btn-group">
+        <button class="reset-btn" onclick="resetAll()">清空數據</button>
     </div>
 </div>
 
 <script>
-    const banks = ['BOC', '工銀', 'MPAY', '大豐', '支付寶', 'uepay'];
+    // 8 間銀行名單
+    const banks = ['BOC', '工銀', 'MPAY', '大豐', '支付寶', 'uepay', '國際', '廣發'];
+    
+    // 5 款優惠券
     const coupons = [
         { name: '滿30減10', s: 30, d: 10 },
         { name: '滿60減20', s: 60, d: 20 },
@@ -128,41 +157,49 @@
 
     const bankList = document.getElementById('bank-list');
 
-    // 初始化介面
+    // 動態生成銀行卡片
     banks.forEach(bank => {
         const card = document.createElement('div');
         card.className = 'bank-card';
-        let html = `<div class="bank-name">${bank}</div>`;
         
-        coupons.forEach((c, idx) => {
+        let html = `<div class="bank-name">${bank}</div>`;
+        coupons.forEach((c) => {
             html += `
                 <div class="coupon-row">
-                    <label>${c.name}</label>
+                    <span class="coupon-label">${c.name}</span>
                     <input type="number" class="count-input" 
                            data-spend="${c.s}" data-discount="${c.d}" 
+                           pattern="[0-9]*" inputmode="numeric"
                            min="0" placeholder="0" oninput="calc()">
                 </div>`;
         });
+        
         card.innerHTML = html;
         bankList.appendChild(card);
     });
 
+    // 計算函數
     function calc() {
         let totalD = 0;
         let totalS = 0;
-        document.querySelectorAll('.count-input').forEach(input => {
+        const inputs = document.querySelectorAll('.count-input');
+        
+        inputs.forEach(input => {
             const count = parseInt(input.value) || 0;
             totalD += count * parseInt(input.dataset.discount);
             totalS += count * parseInt(input.dataset.spend);
         });
+
         document.getElementById('total-discount').innerText = totalD.toLocaleString();
         document.getElementById('total-spend').innerText = totalS.toLocaleString();
     }
 
+    // 重置功能
     function resetAll() {
         if(confirm('確定要清空所有紀錄嗎？')) {
             document.querySelectorAll('.count-input').forEach(i => i.value = '');
             calc();
+            window.scrollTo(0, 0); // 回到頂部
         }
     }
 </script>
