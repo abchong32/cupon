@@ -3,136 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>我的抽獎日記</title>
+    <title>我的抽獎全紀錄</title>
     <style>
         :root {
             --primary: #2c3e50;
-            --secondary: #34495e;
             --accent: #3498db;
             --success: #27ae60;
             --danger: #e74c3c;
             --light-bg: #f0f2f5;
         }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: -apple-system, sans-serif;
             background-color: var(--light-bg);
-            margin: 0;
-            padding: 10px;
-            padding-bottom: 140px; 
-            -webkit-tap-highlight-color: transparent;
+            margin: 0; padding: 10px; padding-bottom: 140px;
         }
         .container { max-width: 600px; margin: auto; }
-        
-        h1 { text-align: center; color: var(--primary); font-size: 1.5rem; margin: 20px 0; }
-
-        .card {
-            background: white;
-            border-radius: 15px;
-            padding: 15px;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
-
+        .card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
         .label-title { font-weight: bold; color: var(--primary); margin-bottom: 10px; display: block; }
         
-        input[type="date"] {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 1rem;
-            box-sizing: border-box;
-            margin-bottom: 15px;
-        }
+        input[type="date"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box; margin-bottom: 15px; }
 
-        .bank-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-        .bank-box {
-            border: 1px solid #edf2f7;
-            border-radius: 10px;
-            padding: 10px;
-            background: #fff;
-        }
+        .bank-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .bank-box { border: 1px solid #edf2f7; border-radius: 10px; padding: 10px; background: #fff; }
         .bank-title { font-weight: bold; color: var(--accent); font-size: 0.9rem; margin-bottom: 8px; text-align: center; border-bottom: 1px solid #eee; padding-bottom: 4px; }
         
-        .coupon-input {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 6px;
-            font-size: 0.85rem;
-        }
-        .coupon-input span { flex: 1; }
-        .coupon-input input {
-            width: 45px;
-            border: 1px solid #cbd5e0;
-            border-radius: 4px;
-            text-align: center;
-            padding: 4px 2px;
-            font-size: 1rem;
-        }
+        .coupon-input { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 0.85rem; }
+        .coupon-input input { width: 45px; border: 1px solid #cbd5e0; border-radius: 4px; text-align: center; padding: 4px 2px; font-size: 1rem; }
 
-        .btn-save {
-            width: 100%;
-            background: var(--success);
-            color: white;
-            border: none;
-            padding: 15px;
-            border-radius: 10px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            margin-top: 15px;
-            box-shadow: 0 4px 6px rgba(39, 174, 96, 0.2);
-        }
-        .btn-save:active { transform: scale(0.98); }
+        .btn-save { width: 100%; background: var(--success); color: white; border: none; padding: 15px; border-radius: 10px; font-size: 1.1rem; font-weight: bold; margin-top: 15px; }
 
+        /* 歷史紀錄樣式 */
         .history-card { border-left: 5px solid var(--accent); position: relative; }
-        .history-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 0.9rem; color: #666; }
-        .history-data { color: var(--danger); font-size: 1rem; font-weight: bold; margin-top: 5px; }
-        .btn-del { position: absolute; right: 10px; bottom: 10px; color: #ccc; border: none; background: none; font-size: 0.8rem; }
+        .history-header { font-weight: bold; font-size: 0.95rem; color: #333; margin-bottom: 5px; }
+        .history-data { color: var(--danger); font-size: 0.9rem; font-weight: bold; }
+        .history-btns { margin-top: 10px; display: flex; gap: 10px; }
+        .btn-view { background: #ebf5ff; color: var(--accent); border: 1px solid var(--accent); padding: 5px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; }
+        .btn-del-item { background: #fff; color: #ccc; border: 1px solid #eee; padding: 5px 12px; border-radius: 6px; font-size: 0.85rem; }
 
-        .sticky-summary {
-            position: fixed;
-            bottom: 0; left: 0; right: 0;
-            background: var(--primary);
-            color: white;
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            box-shadow: 0 -4px 10px rgba(0,0,0,0.2);
-            z-index: 1000;
-        }
+        /* 詳情彈窗樣式 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-content { background: white; width: 90%; max-width: 400px; border-radius: 20px; padding: 20px; max-height: 80vh; overflow-y: auto; }
+        .modal-header { font-weight: bold; font-size: 1.2rem; border-bottom: 2px solid var(--accent); padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; }
+        .detail-row { margin-bottom: 15px; }
+        .detail-bank-name { color: var(--accent); font-weight: bold; font-size: 1rem; margin-bottom: 5px; }
+        .detail-item { font-size: 0.9rem; padding-left: 10px; color: #555; }
+        .btn-close { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 10px; margin-top: 20px; font-weight: bold; }
+
+        .sticky-summary { position: fixed; bottom: 0; left: 0; right: 0; background: var(--primary); color: white; padding: 15px 20px; display: flex; justify-content: space-between; box-shadow: 0 -4px 10px rgba(0,0,0,0.2); z-index: 1000; }
         .summary-box { text-align: center; flex: 1; }
-        .summary-label { font-size: 0.75rem; opacity: 0.8; margin-bottom: 4px; display: block; }
-        .summary-val { font-size: 1.2rem; font-weight: bold; color: #f1c40f; }
-
-        .empty-hint { text-align: center; color: #999; padding: 20px; font-size: 0.9rem; }
+        .summary-label { font-size: 0.75rem; opacity: 0.8; }
+        .summary-val { font-size: 1.2rem; font-weight: bold; color: #f1c40f; display: block; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>🧧 我的抽獎日記</h1>
+    <h1>🧧 我的抽獎全紀錄</h1>
 
     <div class="card">
         <span class="label-title">1. 選擇抽獎日期</span>
         <input type="date" id="date-picker">
         
         <span class="label-title">2. 輸入各銀行中獎數量</span>
-        <div id="bank-container" class="bank-grid">
-            </div>
-
+        <div id="bank-container" class="bank-grid"></div>
         <button class="btn-save" onclick="saveRecord()">保存本次抽獎</button>
     </div>
 
-    <span class="label-title" style="margin-left: 10px;">歷史紀錄清單</span>
+    <span class="label-title" style="margin-left: 10px;">翻查歷史明細</span>
     <div id="history-container"></div>
 
-    <div style="text-align: center; margin-top: 20px;">
+    <div style="text-align: center; margin-top: 30px;">
         <button onclick="clearAllData()" style="color:#999; border:none; background:none; font-size:0.8rem; text-decoration: underline;">清空所有歷史數據</button>
+    </div>
+</div>
+
+<div id="detail-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <span id="modal-date">日期</span>
+            <span onclick="closeModal()" style="color:#ccc; cursor:pointer;">✕</span>
+        </div>
+        <div id="modal-body"></div>
+        <button class="btn-close" onclick="closeModal()">關閉窗口</button>
     </div>
 </div>
 
@@ -150,7 +102,6 @@
 
 <script>
     const banks = ['BOC', '工銀', 'MPAY', '大豐', '支付寶', 'uepay', '國際', '廣發'];
-    // 恢復原本的文字描述
     const couponTypes = [
         { l: '滿30減10', s: 30, d: 10 },
         { l: '滿60減20', s: 60, d: 20 },
@@ -159,22 +110,17 @@
         { l: '滿600減200', s: 600, d: 200 }
     ];
 
-    let myData = JSON.parse(localStorage.getItem('venus_lottery_v1')) || [];
+    let myData = JSON.parse(localStorage.getItem('venus_lottery_v2')) || [];
 
     window.onload = () => {
         document.getElementById('date-picker').valueAsDate = new Date();
         const container = document.getElementById('bank-container');
-        
         banks.forEach(name => {
             const box = document.createElement('div');
             box.className = 'bank-box';
             let html = `<div class="bank-title">${name}</div>`;
-            couponTypes.forEach((c) => {
-                html += `
-                    <div class="coupon-input">
-                        <span>${c.l}</span>
-                        <input type="number" class="num-input" data-s="${c.s}" data-d="${c.d}" min="0" placeholder="0" inputmode="numeric">
-                    </div>`;
+            couponTypes.forEach((c, idx) => {
+                html += `<div class="coupon-input"><span>${c.l}</span><input type="number" class="num-input" data-bank="${name}" data-label="${c.l}" data-s="${c.s}" data-d="${c.d}" min="0" placeholder="0" inputmode="numeric"></div>`;
             });
             box.innerHTML = html;
             container.appendChild(box);
@@ -186,30 +132,35 @@
         const date = document.getElementById('date-picker').value;
         const inputs = document.querySelectorAll('.num-input');
         let dSum = 0, sSum = 0, hasData = false;
+        let details = {};
 
         inputs.forEach(i => {
             const val = parseInt(i.value) || 0;
             if(val > 0) {
+                const b = i.dataset.bank;
+                const l = i.dataset.label;
                 dSum += val * parseInt(i.dataset.d);
                 sSum += val * parseInt(i.dataset.s);
+                if(!details[b]) details[b] = [];
+                details[b].push({ label: l, count: val });
                 hasData = true;
             }
         });
 
         if(!hasData) { alert('請填寫中獎數量！'); return; }
 
-        const entry = { date, discount: dSum, spend: sSum, id: Date.now() };
+        const entry = { date, discount: dSum, spend: sSum, details, id: Date.now() };
         myData.unshift(entry);
-        localStorage.setItem('venus_lottery_v1', JSON.stringify(myData));
+        localStorage.setItem('venus_lottery_v2', JSON.stringify(myData));
         
         inputs.forEach(i => i.value = '');
         renderHistory();
-        alert('已成功存入日記！');
+        alert('紀錄成功！');
     }
 
     function renderHistory() {
         const list = document.getElementById('history-container');
-        list.innerHTML = myData.length === 0 ? '<div class="empty-hint">尚無紀錄</div>' : '';
+        list.innerHTML = myData.length === 0 ? '<div style="text-align:center;color:#999;padding:20px;">尚無紀錄</div>' : '';
         
         let totalD = 0, totalS = 0;
         myData.forEach(item => {
@@ -219,9 +170,12 @@
             const div = document.createElement('div');
             div.className = 'card history-card';
             div.innerHTML = `
-                <div class="history-header"><span>📅 ${item.date}</span></div>
-                <div class="history-data">獎: MOP ${item.discount.toLocaleString()} | 消: MOP ${item.spend.toLocaleString()}</div>
-                <button class="btn-del" onclick="deleteItem(${item.id})">刪除</button>
+                <div class="history-header">📅 ${item.date}</div>
+                <div class="history-data">總獎: MOP ${item.discount.toLocaleString()} | 總消: MOP ${item.spend.toLocaleString()}</div>
+                <div class="history-btns">
+                    <button class="btn-view" onclick="showDetails(${item.id})">查看中獎詳情</button>
+                    <button class="btn-del-item" onclick="deleteItem(${item.id})">刪除</button>
+                </div>
             `;
             list.appendChild(div);
         });
@@ -230,17 +184,38 @@
         document.getElementById('grand-spend').innerText = totalS.toLocaleString();
     }
 
+    function showDetails(id) {
+        const entry = myData.find(i => i.id === id);
+        if(!entry) return;
+
+        document.getElementById('modal-date').innerText = entry.date + " 詳情";
+        const body = document.getElementById('modal-body');
+        body.innerHTML = '';
+
+        for (const bank in entry.details) {
+            let bankHtml = `<div class="detail-row"><div class="detail-bank-name">${bank}</div>`;
+            entry.details[bank].forEach(item => {
+                bankHtml += `<div class="detail-item">・${item.label}： ${item.count} 張</div>`;
+            });
+            bankHtml += `</div>`;
+            body.innerHTML += bankHtml;
+        }
+        document.getElementById('detail-modal').style.display = 'flex';
+    }
+
+    function closeModal() { document.getElementById('detail-modal').style.display = 'none'; }
+
     function deleteItem(id) {
         if(confirm('確定要刪除這筆紀錄嗎？')) {
             myData = myData.filter(i => i.id !== id);
-            localStorage.setItem('venus_lottery_v1', JSON.stringify(myData));
+            localStorage.setItem('venus_lottery_v2', JSON.stringify(myData));
             renderHistory();
         }
     }
 
     function clearAllData() {
-        if(confirm('確定要清空這台手機裡所有的歷史數據嗎？')) {
-            localStorage.removeItem('venus_lottery_v1');
+        if(confirm('確定要清空所有數據嗎？')) {
+            localStorage.removeItem('venus_lottery_v2');
             myData = [];
             renderHistory();
         }
