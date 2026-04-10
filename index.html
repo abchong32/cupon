@@ -11,21 +11,20 @@
             --accent: #3498db;
             --success: #27ae60;
             --danger: #e74c3c;
-            --light-bg: #f8f9fa;
+            --light-bg: #f0f2f5;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #f0f2f5;
+            background-color: var(--light-bg);
             margin: 0;
             padding: 10px;
-            padding-bottom: 140px; /* 底部留空給總計欄 */
+            padding-bottom: 140px; 
             -webkit-tap-highlight-color: transparent;
         }
         .container { max-width: 600px; margin: auto; }
         
         h1 { text-align: center; color: var(--primary); font-size: 1.5rem; margin: 20px 0; }
 
-        /* 卡片通用樣式 */
         .card {
             background: white;
             border-radius: 15px;
@@ -36,7 +35,6 @@
 
         .label-title { font-weight: bold; color: var(--primary); margin-bottom: 10px; display: block; }
         
-        /* 日期選擇 */
         input[type="date"] {
             width: 100%;
             padding: 12px;
@@ -47,7 +45,6 @@
             margin-bottom: 15px;
         }
 
-        /* 銀行格線 */
         .bank-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -66,17 +63,18 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 6px;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
         }
+        .coupon-input span { flex: 1; }
         .coupon-input input {
-            width: 40px;
+            width: 45px;
             border: 1px solid #cbd5e0;
             border-radius: 4px;
             text-align: center;
-            padding: 2px;
+            padding: 4px 2px;
+            font-size: 1rem;
         }
 
-        /* 按鈕 */
         .btn-save {
             width: 100%;
             background: var(--success);
@@ -86,18 +84,16 @@
             border-radius: 10px;
             font-size: 1.1rem;
             font-weight: bold;
-            margin-top: 10px;
+            margin-top: 15px;
             box-shadow: 0 4px 6px rgba(39, 174, 96, 0.2);
         }
         .btn-save:active { transform: scale(0.98); }
 
-        /* 歷史紀錄 */
         .history-card { border-left: 5px solid var(--accent); position: relative; }
         .history-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 0.9rem; color: #666; }
         .history-data { color: var(--danger); font-size: 1rem; font-weight: bold; margin-top: 5px; }
         .btn-del { position: absolute; right: 10px; bottom: 10px; color: #ccc; border: none; background: none; font-size: 0.8rem; }
 
-        /* 底部固定欄 */
         .sticky-summary {
             position: fixed;
             bottom: 0; left: 0; right: 0;
@@ -119,7 +115,7 @@
 <body>
 
 <div class="container">
-    <h1>🧧 我的抽獎紀錄本</h1>
+    <h1>🧧 我的抽獎日記</h1>
 
     <div class="card">
         <span class="label-title">1. 選擇抽獎日期</span>
@@ -133,11 +129,10 @@
     </div>
 
     <span class="label-title" style="margin-left: 10px;">歷史紀錄清單</span>
-    <div id="history-container">
-        </div>
+    <div id="history-container"></div>
 
     <div style="text-align: center; margin-top: 20px;">
-        <button onclick="clearAllData()" style="color:#999; border:none; background:none; font-size:0.8rem; text-decoration: underline;">清空手機所有數據</button>
+        <button onclick="clearAllData()" style="color:#999; border:none; background:none; font-size:0.8rem; text-decoration: underline;">清空所有歷史數據</button>
     </div>
 </div>
 
@@ -155,17 +150,17 @@
 
 <script>
     const banks = ['BOC', '工銀', 'MPAY', '大豐', '支付寶', 'uepay', '國際', '廣發'];
+    // 恢復原本的文字描述
     const couponTypes = [
-        { l: '30-10', s: 30, d: 10 },
-        { l: '60-20', s: 60, d: 20 },
-        { l: '150-50', s: 150, d: 50 },
-        { l: '300-100', s: 300, d: 100 },
-        { l: '600-200', s: 600, d: 200 }
+        { l: '滿30減10', s: 30, d: 10 },
+        { l: '滿60減20', s: 60, d: 20 },
+        { l: '滿150減50', s: 150, d: 50 },
+        { l: '滿300減100', s: 300, d: 100 },
+        { l: '滿600減200', s: 600, d: 200 }
     ];
 
     let myData = JSON.parse(localStorage.getItem('venus_lottery_v1')) || [];
 
-    // 初始化介面
     window.onload = () => {
         document.getElementById('date-picker').valueAsDate = new Date();
         const container = document.getElementById('bank-container');
@@ -174,11 +169,11 @@
             const box = document.createElement('div');
             box.className = 'bank-box';
             let html = `<div class="bank-title">${name}</div>`;
-            couponTypes.forEach((c, i) => {
+            couponTypes.forEach((c) => {
                 html += `
                     <div class="coupon-input">
                         <span>${c.l}</span>
-                        <input type="number" class="num-input" data-s="${c.s}" data-d="${c.d}" min="0" placeholder="0">
+                        <input type="number" class="num-input" data-s="${c.s}" data-d="${c.d}" min="0" placeholder="0" inputmode="numeric">
                     </div>`;
             });
             box.innerHTML = html;
@@ -187,7 +182,6 @@
         renderHistory();
     };
 
-    // 保存
     function saveRecord() {
         const date = document.getElementById('date-picker').value;
         const inputs = document.querySelectorAll('.num-input');
@@ -208,16 +202,14 @@
         myData.unshift(entry);
         localStorage.setItem('venus_lottery_v1', JSON.stringify(myData));
         
-        // 重置輸入
         inputs.forEach(i => i.value = '');
         renderHistory();
         alert('已成功存入日記！');
     }
 
-    // 渲染
     function renderHistory() {
         const list = document.getElementById('history-container');
-        list.innerHTML = myData.length === 0 ? '<div class="empty-hint">尚無紀錄，趕快去抽獎吧！</div>' : '';
+        list.innerHTML = myData.length === 0 ? '<div class="empty-hint">尚無紀錄</div>' : '';
         
         let totalD = 0, totalS = 0;
         myData.forEach(item => {
@@ -228,7 +220,7 @@
             div.className = 'card history-card';
             div.innerHTML = `
                 <div class="history-header"><span>📅 ${item.date}</span></div>
-                <div class="history-data">中獎: MOP ${item.discount} | 需消費: MOP ${item.spend}</div>
+                <div class="history-data">獎: MOP ${item.discount.toLocaleString()} | 消: MOP ${item.spend.toLocaleString()}</div>
                 <button class="btn-del" onclick="deleteItem(${item.id})">刪除</button>
             `;
             list.appendChild(div);
@@ -247,7 +239,7 @@
     }
 
     function clearAllData() {
-        if(confirm('危險操作：確定要清空這台手機裡所有的歷史數據嗎？')) {
+        if(confirm('確定要清空這台手機裡所有的歷史數據嗎？')) {
             localStorage.removeItem('venus_lottery_v1');
             myData = [];
             renderHistory();
