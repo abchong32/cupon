@@ -2,204 +2,255 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>8大銀行優惠券計算機</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>我的抽獎日記</title>
     <style>
         :root {
-            --primary-color: #2c3e50;
-            --accent-color: #e74c3c;
-            --bg-color: #f0f2f5;
-            --card-bg: #ffffff;
+            --primary: #2c3e50;
+            --secondary: #34495e;
+            --accent: #3498db;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --light-bg: #f8f9fa;
         }
         body {
-            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f0f2f5;
             margin: 0;
             padding: 10px;
-            color: #333;
+            padding-bottom: 140px; /* 底部留空給總計欄 */
+            -webkit-tap-highlight-color: transparent;
         }
-        .container {
-            max-width: 1100px;
-            margin: auto;
-            padding-bottom: 120px; /* 為底部總計留空間 */
-        }
-        h1 {
-            text-align: center;
-            color: var(--primary-color);
-            font-size: 1.4rem;
-            margin: 15px 0;
-        }
-        /* 銀行卡片網格佈局 */
-        .bank-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 12px;
-        }
-        .bank-card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            border: 1px solid #e1e4e8;
-        }
-        .bank-name {
-            font-weight: bold;
-            font-size: 1.1rem;
-            color: #3498db;
-            border-left: 4px solid #3498db;
-            padding-left: 10px;
-            margin-bottom: 15px;
-        }
-        /* 優惠券行佈局 */
-        .coupon-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            padding: 5px 0;
-            border-bottom: 1px dashed #f0f0f0;
-        }
-        .coupon-row:last-child { border-bottom: none; }
-        .coupon-label { font-size: 0.95rem; color: #555; }
+        .container { max-width: 600px; margin: auto; }
         
-        /* 輸入框樣式 */
-        input[type="number"] {
-            width: 65px;
-            padding: 6px;
-            border: 2px solid #eee;
-            border-radius: 8px;
-            text-align: center;
-            font-size: 1rem;
-            -webkit-appearance: none; /* 移除 iOS 默認樣式 */
-        }
-        input[type="number"]:focus {
-            border-color: #3498db;
-            outline: none;
+        h1 { text-align: center; color: var(--primary); font-size: 1.5rem; margin: 20px 0; }
+
+        /* 卡片通用樣式 */
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
 
-        /* 底部固定總計欄 */
-        #summary-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: #2c3e50;
-            color: white;
-            padding: 15px 20px;
-            box-shadow: 0 -3px 10px rgba(0,0,0,0.2);
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            z-index: 100;
+        .label-title { font-weight: bold; color: var(--primary); margin-bottom: 10px; display: block; }
+        
+        /* 日期選擇 */
+        input[type="date"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            margin-bottom: 15px;
         }
-        .res-line {
+
+        /* 銀行格線 */
+        .bank-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .bank-box {
+            border: 1px solid #edf2f7;
+            border-radius: 10px;
+            padding: 10px;
+            background: #fff;
+        }
+        .bank-title { font-weight: bold; color: var(--accent); font-size: 0.9rem; margin-bottom: 8px; text-align: center; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+        
+        .coupon-input {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 1rem;
+            margin-bottom: 6px;
+            font-size: 0.8rem;
         }
-        .highlight {
-            font-size: 1.3rem;
-            font-weight: bold;
-            color: #f1c40f;
+        .coupon-input input {
+            width: 40px;
+            border: 1px solid #cbd5e0;
+            border-radius: 4px;
+            text-align: center;
+            padding: 2px;
         }
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 5px;
-        }
-        .reset-btn {
-            flex: 1;
-            padding: 8px;
-            background: #7f8c8d;
+
+        /* 按鈕 */
+        .btn-save {
+            width: 100%;
+            background: var(--success);
             color: white;
             border: none;
-            border-radius: 6px;
-            font-size: 0.9rem;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-top: 10px;
+            box-shadow: 0 4px 6px rgba(39, 174, 96, 0.2);
         }
+        .btn-save:active { transform: scale(0.98); }
+
+        /* 歷史紀錄 */
+        .history-card { border-left: 5px solid var(--accent); position: relative; }
+        .history-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 0.9rem; color: #666; }
+        .history-data { color: var(--danger); font-size: 1rem; font-weight: bold; margin-top: 5px; }
+        .btn-del { position: absolute; right: 10px; bottom: 10px; color: #ccc; border: none; background: none; font-size: 0.8rem; }
+
+        /* 底部固定欄 */
+        .sticky-summary {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: var(--primary);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        .summary-box { text-align: center; flex: 1; }
+        .summary-label { font-size: 0.75rem; opacity: 0.8; margin-bottom: 4px; display: block; }
+        .summary-val { font-size: 1.2rem; font-weight: bold; color: #f1c40f; }
+
+        .empty-hint { text-align: center; color: #999; padding: 20px; font-size: 0.9rem; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>消費抽獎優惠券紀錄 (8大銀行)</h1>
+    <h1>🧧 我的抽獎紀錄本</h1>
 
-    <div id="bank-list" class="bank-grid">
+    <div class="card">
+        <span class="label-title">1. 選擇抽獎日期</span>
+        <input type="date" id="date-picker">
+        
+        <span class="label-title">2. 輸入各銀行中獎數量</span>
+        <div id="bank-container" class="bank-grid">
+            </div>
+
+        <button class="btn-save" onclick="saveRecord()">保存本次抽獎</button>
+    </div>
+
+    <span class="label-title" style="margin-left: 10px;">歷史紀錄清單</span>
+    <div id="history-container">
         </div>
+
+    <div style="text-align: center; margin-top: 20px;">
+        <button onclick="clearAllData()" style="color:#999; border:none; background:none; font-size:0.8rem; text-decoration: underline;">清空手機所有數據</button>
+    </div>
 </div>
 
-<div id="summary-bar">
-    <div class="res-line">
-        <span>中獎總金額：</span>
-        <span>MOP <span id="total-discount" class="highlight">0</span></span>
+<div class="sticky-summary">
+    <div class="summary-box">
+        <span class="summary-label">累積中獎總額</span>
+        <span class="summary-val">MOP <span id="grand-discount">0</span></span>
     </div>
-    <div class="res-line">
-        <span>需消費總額：</span>
-        <span>MOP <span id="total-spend" class="highlight">0</span></span>
-    </div>
-    <div class="btn-group">
-        <button class="reset-btn" onclick="resetAll()">清空數據</button>
+    <div style="width: 1px; background: rgba(255,255,255,0.2); margin: 0 15px;"></div>
+    <div class="summary-box">
+        <span class="summary-label">累積需消費額</span>
+        <span class="summary-val">MOP <span id="grand-spend">0</span></span>
     </div>
 </div>
 
 <script>
-    // 8 間銀行名單
     const banks = ['BOC', '工銀', 'MPAY', '大豐', '支付寶', 'uepay', '國際', '廣發'];
-    
-    // 5 款優惠券
-    const coupons = [
-        { name: '滿30減10', s: 30, d: 10 },
-        { name: '滿60減20', s: 60, d: 20 },
-        { name: '滿150減50', s: 150, d: 50 },
-        { name: '滿300減100', s: 300, d: 100 },
-        { name: '滿600減200', s: 600, d: 200 }
+    const couponTypes = [
+        { l: '30-10', s: 30, d: 10 },
+        { l: '60-20', s: 60, d: 20 },
+        { l: '150-50', s: 150, d: 50 },
+        { l: '300-100', s: 300, d: 100 },
+        { l: '600-200', s: 600, d: 200 }
     ];
 
-    const bankList = document.getElementById('bank-list');
+    let myData = JSON.parse(localStorage.getItem('venus_lottery_v1')) || [];
 
-    // 動態生成銀行卡片
-    banks.forEach(bank => {
-        const card = document.createElement('div');
-        card.className = 'bank-card';
+    // 初始化介面
+    window.onload = () => {
+        document.getElementById('date-picker').valueAsDate = new Date();
+        const container = document.getElementById('bank-container');
         
-        let html = `<div class="bank-name">${bank}</div>`;
-        coupons.forEach((c) => {
-            html += `
-                <div class="coupon-row">
-                    <span class="coupon-label">${c.name}</span>
-                    <input type="number" class="count-input" 
-                           data-spend="${c.s}" data-discount="${c.d}" 
-                           pattern="[0-9]*" inputmode="numeric"
-                           min="0" placeholder="0" oninput="calc()">
-                </div>`;
+        banks.forEach(name => {
+            const box = document.createElement('div');
+            box.className = 'bank-box';
+            let html = `<div class="bank-title">${name}</div>`;
+            couponTypes.forEach((c, i) => {
+                html += `
+                    <div class="coupon-input">
+                        <span>${c.l}</span>
+                        <input type="number" class="num-input" data-s="${c.s}" data-d="${c.d}" min="0" placeholder="0">
+                    </div>`;
+            });
+            box.innerHTML = html;
+            container.appendChild(box);
         });
-        
-        card.innerHTML = html;
-        bankList.appendChild(card);
-    });
+        renderHistory();
+    };
 
-    // 計算函數
-    function calc() {
-        let totalD = 0;
-        let totalS = 0;
-        const inputs = document.querySelectorAll('.count-input');
-        
-        inputs.forEach(input => {
-            const count = parseInt(input.value) || 0;
-            totalD += count * parseInt(input.dataset.discount);
-            totalS += count * parseInt(input.dataset.spend);
+    // 保存
+    function saveRecord() {
+        const date = document.getElementById('date-picker').value;
+        const inputs = document.querySelectorAll('.num-input');
+        let dSum = 0, sSum = 0, hasData = false;
+
+        inputs.forEach(i => {
+            const val = parseInt(i.value) || 0;
+            if(val > 0) {
+                dSum += val * parseInt(i.dataset.d);
+                sSum += val * parseInt(i.dataset.s);
+                hasData = true;
+            }
         });
 
-        document.getElementById('total-discount').innerText = totalD.toLocaleString();
-        document.getElementById('total-spend').innerText = totalS.toLocaleString();
+        if(!hasData) { alert('請填寫中獎數量！'); return; }
+
+        const entry = { date, discount: dSum, spend: sSum, id: Date.now() };
+        myData.unshift(entry);
+        localStorage.setItem('venus_lottery_v1', JSON.stringify(myData));
+        
+        // 重置輸入
+        inputs.forEach(i => i.value = '');
+        renderHistory();
+        alert('已成功存入日記！');
     }
 
-    // 重置功能
-    function resetAll() {
-        if(confirm('確定要清空所有紀錄嗎？')) {
-            document.querySelectorAll('.count-input').forEach(i => i.value = '');
-            calc();
-            window.scrollTo(0, 0); // 回到頂部
+    // 渲染
+    function renderHistory() {
+        const list = document.getElementById('history-container');
+        list.innerHTML = myData.length === 0 ? '<div class="empty-hint">尚無紀錄，趕快去抽獎吧！</div>' : '';
+        
+        let totalD = 0, totalS = 0;
+        myData.forEach(item => {
+            totalD += item.discount;
+            totalS += item.spend;
+            
+            const div = document.createElement('div');
+            div.className = 'card history-card';
+            div.innerHTML = `
+                <div class="history-header"><span>📅 ${item.date}</span></div>
+                <div class="history-data">中獎: MOP ${item.discount} | 需消費: MOP ${item.spend}</div>
+                <button class="btn-del" onclick="deleteItem(${item.id})">刪除</button>
+            `;
+            list.appendChild(div);
+        });
+
+        document.getElementById('grand-discount').innerText = totalD.toLocaleString();
+        document.getElementById('grand-spend').innerText = totalS.toLocaleString();
+    }
+
+    function deleteItem(id) {
+        if(confirm('確定要刪除這筆紀錄嗎？')) {
+            myData = myData.filter(i => i.id !== id);
+            localStorage.setItem('venus_lottery_v1', JSON.stringify(myData));
+            renderHistory();
+        }
+    }
+
+    function clearAllData() {
+        if(confirm('危險操作：確定要清空這台手機裡所有的歷史數據嗎？')) {
+            localStorage.removeItem('venus_lottery_v1');
+            myData = [];
+            renderHistory();
         }
     }
 </script>
