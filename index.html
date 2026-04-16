@@ -3,20 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>活動抽獎與核銷紀錄</title>
+    <title>活動抽獎與核銷紀錄 (雲端同步版)</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/flatpickr.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/l10n/zh.min.js"></script>
 
     <style>
-        :root {
-            --primary: #2c3e50;
-            --accent: #3498db;
-            --success: #27ae60;
-            --danger: #e74c3c;
-            --light-bg: #f0f2f5;
-        }
+        :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --danger: #e74c3c; --light-bg: #f0f2f5; }
         body { font-family: -apple-system, sans-serif; background-color: var(--light-bg); margin: 0; padding: 10px; padding-bottom: 140px; }
         .container { max-width: 600px; margin: auto; }
         .card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
@@ -59,7 +53,6 @@
         .modal-header { font-weight: bold; font-size: 1.1rem; border-bottom: 2px solid var(--accent); padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; }
         .detail-row { margin-bottom: 15px; background: #f9fbfd; padding: 10px; border-radius: 8px;}
         .detail-bank-name { color: var(--accent); font-weight: bold; font-size: 1rem; margin-bottom: 8px; border-bottom: 1px dashed #ddd; padding-bottom: 5px;}
-        
         .detail-item-box { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.9rem; }
         .detail-info { flex: 1; }
         .detail-actions { display: flex; gap: 5px; }
@@ -76,16 +69,27 @@
         .summary-val { font-size: 1.2rem; font-weight: bold; color: #f1c40f; display: block; }
 
         .ios-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 3000; display: none; justify-content: center; align-items: center; }
-        .ios-box { background: rgba(255,255,255,0.95); width: 280px; border-radius: 14px; text-align: center; backdrop-filter: blur(10px); box-shadow: 0 4px 20px rgba(0,0,0,0.15); animation: popIn 0.2s ease-out; overflow: hidden; }
+        .ios-box { background: rgba(255,255,255,0.95); width: 85%; max-width: 320px; border-radius: 14px; text-align: center; backdrop-filter: blur(10px); box-shadow: 0 4px 20px rgba(0,0,0,0.15); animation: popIn 0.2s ease-out; overflow: hidden; display: flex; flex-direction: column;}
         .ios-msg { padding: 25px 15px; font-size: 1.05rem; font-weight: 500; color: #000; border-bottom: 1px solid rgba(0,0,0,0.1); line-height: 1.4; }
         .ios-btn-group { display: flex; }
         .ios-btn { flex: 1; padding: 14px; font-size: 1.05rem; font-weight: bold; cursor: pointer; color: #007aff; }
         .ios-btn.cancel { color: #ff3b30; border-right: 1px solid rgba(0,0,0,0.1); }
         .ios-btn:active { background: rgba(0,0,0,0.05); }
         @keyframes popIn { from { transform: scale(1.1); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        /* 載入動畫 */
+        .spinner { border: 4px solid rgba(0,0,0,0.1); width: 36px; height: 36px; border-radius: 50%; border-left-color: var(--accent); animation: spin 1s linear infinite; margin: 0 auto 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
+
+<div id="loading-overlay" class="ios-overlay" style="display:flex;">
+    <div class="ios-box" style="padding: 30px; width:auto; max-width: 200px;">
+        <div class="spinner"></div>
+        <div style="font-weight: bold; color: #333;">同步雲端資料中...</div>
+    </div>
+</div>
 
 <div class="container">
     <h1>🧧 活動抽獎與核銷紀錄</h1>
@@ -95,11 +99,9 @@
         <div class="user-selector">
             <input type="radio" name="entry-user" id="user-zhuang" value="🦦莊" class="user-radio">
             <label for="user-zhuang" class="user-label">🦦莊</label>
-            
             <input type="radio" name="entry-user" id="user-nic" value="😗Nic" class="user-radio">
             <label for="user-nic" class="user-label">😗Nic</label>
         </div>
-
         <span class="label-title">2. 選擇日期與數量</span>
         <input type="text" id="date-picker" class="date-input" readonly>
         
@@ -115,11 +117,9 @@
             <option value="😗Nic">只顯示 😗Nic 的數據</option>
         </select>
     </div>
-    
     <div id="history-container"></div>
-
     <div style="text-align: center; margin-top: 30px;">
-        <button onclick="clearAllDataBtn()" style="color:#999; border:none; background:none; font-size:0.8rem; text-decoration: underline;">清空所有歷史數據</button>
+        <button onclick="clearAllDataBtn()" style="color:#e74c3c; border:none; background:none; font-size:0.8rem; text-decoration: underline;">⚠️ 永久清空雲端所有資料</button>
     </div>
 </div>
 
@@ -135,77 +135,43 @@
 </div>
 
 <div class="sticky-summary">
-    <div class="summary-box">
-        <span class="summary-label">活動期間總中獎金額</span>
-        <span class="summary-val" style="color:#fff;">MOP <span id="grand-total">0</span></span>
-    </div>
+    <div class="summary-box"><span class="summary-label">活動期間總中獎金額</span><span class="summary-val" style="color:#fff;">MOP <span id="grand-total">0</span></span></div>
     <div style="width: 1px; background: rgba(255,255,255,0.2); margin: 0 10px;"></div>
-    <div class="summary-box">
-        <span class="summary-label">當前剩餘可用金額</span>
-        <span class="summary-val">MOP <span id="grand-remain">0</span></span>
-    </div>
+    <div class="summary-box"><span class="summary-label">當前剩餘可用金額</span><span class="summary-val">MOP <span id="grand-remain">0</span></span></div>
 </div>
 
-<div id="custom-alert" class="ios-overlay">
-    <div class="ios-box">
-        <div class="ios-msg" id="alert-msg"></div>
-        <div class="ios-btn-group">
-            <div class="ios-btn" onclick="document.getElementById('custom-alert').style.display='none'">確定</div>
-        </div>
-    </div>
-</div>
-
-<div id="custom-confirm" class="ios-overlay">
-    <div class="ios-box">
-        <div class="ios-msg" id="confirm-msg"></div>
-        <div class="ios-btn-group">
-            <div class="ios-btn cancel" onclick="closeCustomConfirm(false)">取消</div>
-            <div class="ios-btn" onclick="closeCustomConfirm(true)">確定</div>
-        </div>
-    </div>
-</div>
+<div id="custom-alert" class="ios-overlay"><div class="ios-box"><div class="ios-msg" id="alert-msg"></div><div class="ios-btn-group"><div class="ios-btn" onclick="document.getElementById('custom-alert').style.display='none'">確定</div></div></div></div>
+<div id="custom-confirm" class="ios-overlay"><div class="ios-box"><div class="ios-msg" id="confirm-msg"></div><div class="ios-btn-group"><div class="ios-btn cancel" onclick="closeCustomConfirm(false)">取消</div><div class="ios-btn" onclick="closeCustomConfirm(true)">確定</div></div></div></div>
 
 <script>
-    function showMsg(text) {
-        document.getElementById('alert-msg').innerText = text;
-        document.getElementById('custom-alert').style.display = 'flex';
-    }
+    // ==========================================
+    // ⚠️ 警告：請在此處貼上你的 Google Apps Script Web App URL
+    // ==========================================
+    const API_URL = "https://script.google.com/macros/s/AKfycbyp1GKlRG-cVm6F9PoUK4DTD4j2ZEukoCUeZR_IHSu8GjcXAiBjh7O3TGCo-ozBR76kmQ/exec"; 
+
+    function showLoading() { document.getElementById('loading-overlay').style.display = 'flex'; }
+    function hideLoading() { document.getElementById('loading-overlay').style.display = 'none'; }
+    function showMsg(text) { document.getElementById('alert-msg').innerText = text; document.getElementById('custom-alert').style.display = 'flex'; }
 
     let confirmCallback = null;
-    function showConfirm(text, callback) {
-        document.getElementById('confirm-msg').innerText = text;
-        document.getElementById('custom-confirm').style.display = 'flex';
-        confirmCallback = callback;
-    }
-    function closeCustomConfirm(result) {
-        document.getElementById('custom-confirm').style.display = 'none';
-        if(result && confirmCallback) confirmCallback();
-    }
+    function showConfirm(text, callback) { document.getElementById('confirm-msg').innerText = text; document.getElementById('custom-confirm').style.display = 'flex'; confirmCallback = callback; }
+    function closeCustomConfirm(result) { document.getElementById('custom-confirm').style.display = 'none'; if(result && confirmCallback) confirmCallback(); }
 
     const banks = ['BOC', '工銀', 'MPAY', '大豐', '支付寶', 'uepay', '國際', '廣發'];
     const couponTypes = [
-        { l: '滿30減10', s: 30, d: 10 },
-        { l: '滿60減20', s: 60, d: 20 },
-        { l: '滿150減50', s: 150, d: 50 },
-        { l: '滿300減100', s: 300, d: 100 },
-        { l: '滿600減200', s: 600, d: 200 }
+        { l: '滿30減10', s: 30, d: 10 }, { l: '滿60減20', s: 60, d: 20 }, { l: '滿150減50', s: 150, d: 50 },
+        { l: '滿300減100', s: 300, d: 100 }, { l: '滿600減200', s: 600, d: 200 }
     ];
 
-    let myData = JSON.parse(localStorage.getItem('venus_lottery_v4')) || [];
+    // 改為雲端驅動，不再使用 localStorage
+    let myData = [];
 
     function getTodayString() {
-        const now = new Date();
-        const yyyy = now.getFullYear();
-        const mm = String(now.getMonth() + 1).padStart(2, '0');
-        const dd = String(now.getDate()).padStart(2, '0');
-        return `${yyyy}-${mm}-${dd}`;
+        const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     }
 
     function getCycleStartDate() {
-        let now = new Date();
-        let dayOfWeek = now.getDay(); 
-        let daysSinceFriday = (dayOfWeek + 2) % 7; 
-        let lastFriday = new Date(now);
+        let now = new Date(); let daysSinceFriday = (now.getDay() + 2) % 7; let lastFriday = new Date(now);
         lastFriday.setDate(now.getDate() - daysSinceFriday);
         return `${lastFriday.getFullYear()}-${String(lastFriday.getMonth() + 1).padStart(2, '0')}-${String(lastFriday.getDate()).padStart(2, '0')}`;
     }
@@ -213,39 +179,63 @@
     window.onload = () => {
         const datePicker = document.getElementById('date-picker');
         const todayStr = getTodayString();
-        
         try {
             flatpickr("#date-picker", {
-                locale: "zh",
-                defaultDate: "today",
-                maxDate: "today",
-                disableMobile: true,
-                onChange: function(selectedDates, dateStr, instance) {
-                    if (dateStr > getTodayString()) {
-                        showMsg('請選擇正確的日期');
-                        instance.setDate(getTodayString());
-                    }
-                }
+                locale: "zh", defaultDate: "today", maxDate: "today", disableMobile: true,
+                onChange: function(s, dateStr, instance) { if (dateStr > getTodayString()) { showMsg('請選擇正確的日期'); instance.setDate(getTodayString()); } }
             });
         } catch (error) {
-            datePicker.type = 'date';
-            datePicker.value = todayStr;
-            datePicker.max = todayStr;
+            datePicker.type = 'date'; datePicker.value = todayStr; datePicker.max = todayStr;
         }
 
         const container = document.getElementById('bank-container');
         banks.forEach(name => {
-            const box = document.createElement('div');
-            box.className = 'bank-box';
+            const box = document.createElement('div'); box.className = 'bank-box';
             let html = `<div class="bank-title">${name}</div>`;
-            couponTypes.forEach(c => {
-                html += `<div class="coupon-input"><span>${c.l}</span><input type="number" class="num-input" data-bank="${name}" data-label="${c.l}" data-s="${c.s}" data-d="${c.d}" min="0" placeholder="0" inputmode="numeric"></div>`;
-            });
-            box.innerHTML = html;
-            container.appendChild(box);
+            couponTypes.forEach(c => { html += `<div class="coupon-input"><span>${c.l}</span><input type="number" class="num-input" data-bank="${name}" data-label="${c.l}" data-s="${c.s}" data-d="${c.d}" min="0" placeholder="0" inputmode="numeric"></div>`; });
+            box.innerHTML = html; container.appendChild(box);
         });
-        renderHistory();
+
+        // 載入雲端資料
+        if(API_URL.includes("請把你的")) {
+            hideLoading();
+            showMsg("⚠️ 系統提示：你還沒有貼上 Google 的網址喔！");
+        } else {
+            fetchDataFromCloud();
+        }
     };
+
+    // --- 與 Google 溝通的核心 API ---
+    function fetchDataFromCloud() {
+        fetch(API_URL)
+            .then(res => res.json())
+            .then(data => {
+                myData = data;
+                renderHistory();
+                hideLoading();
+            })
+            .catch(err => {
+                hideLoading();
+                showMsg('網路連線失敗，無法載入資料');
+            });
+    }
+
+    function apiCall(payload, successMsg) {
+        showLoading();
+        fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        }).then(res => res.json()).then(data => {
+            if(data.status === 'success') {
+                fetchDataFromCloud(); // 重新拉取最新資料確保同步
+                if(successMsg) showMsg(successMsg);
+            } else {
+                hideLoading(); showMsg('儲存失敗，請重試！');
+            }
+        }).catch(err => {
+            hideLoading(); showMsg('連線失敗，請檢查網路');
+        });
+    }
 
     function saveRecord() {
         const userChecked = document.querySelector('input[name="entry-user"]:checked');
@@ -253,16 +243,10 @@
 
         const user = userChecked.value;
         const date = document.getElementById('date-picker').value;
-        
-        if(date > getTodayString()) {
-            showMsg('請選擇正確的日期');
-            document.getElementById('date-picker').value = getTodayString();
-            return;
-        }
+        if(date > getTodayString()) { showMsg('請選擇正確的日期'); document.getElementById('date-picker').value = getTodayString(); return; }
 
         const inputs = document.querySelectorAll('.num-input');
-        let hasData = false;
-        let details = {};
+        let hasData = false; let details = {};
 
         inputs.forEach(i => {
             const val = parseInt(i.value) || 0;
@@ -277,13 +261,12 @@
         if(!hasData) return showMsg('請填寫中獎數量！');
 
         const entry = { user, date, details, id: Date.now() };
-        myData.unshift(entry);
-        localStorage.setItem('venus_lottery_v4', JSON.stringify(myData));
         
         inputs.forEach(i => i.value = '');
         document.getElementById('filter-user').value = 'all';
-        renderHistory();
-        showMsg('✅ 紀錄成功入庫！');
+        
+        // 傳送到雲端
+        apiCall({ action: 'save', entry: entry }, '✅ 紀錄已成功上傳雲端！');
     }
 
     function renderHistory() {
@@ -291,10 +274,7 @@
         const list = document.getElementById('history-container');
         list.innerHTML = '';
         
-        let grandTotal = 0;
-        let grandRemain = 0;
-        let displayCount = 0;
-
+        let grandTotal = 0; let grandRemain = 0; let displayCount = 0;
         const cycleStartDate = getCycleStartDate();
 
         myData.forEach(item => {
@@ -307,43 +287,29 @@
             
             const isExpired = item.date < cycleStartDate;
 
-            let itemTotalD = 0;
-            let itemRemainD = 0;
-            let itemTotalS = 0;    // 總消費額
-            let itemRemainS = 0;   // 剩餘所需消費額
+            let itemTotalD = 0; let itemRemainD = 0; let itemTotalS = 0; let itemRemainS = 0;   
 
             for (const bank in item.details) {
                 item.details[bank].forEach(c => {
-                    itemTotalD += c.count * c.d;
-                    itemRemainD += (c.count - c.used) * c.d;
-                    
-                    // 計算消費額
-                    itemTotalS += c.count * c.s;
-                    itemRemainS += (c.count - c.used) * c.s;
+                    itemTotalD += c.count * c.d; itemRemainD += (c.count - c.used) * c.d;
+                    itemTotalS += c.count * c.s; itemRemainS += (c.count - c.used) * c.s;
                 });
             }
             
             grandTotal += itemTotalD;
-            if (!isExpired) {
-                grandRemain += itemRemainD;
-            }
+            if (!isExpired) { grandRemain += itemRemainD; }
             
             const userTagClass = (displayUser === '🦦莊') ? 'tag-zhuang' : 'tag-nic';
             const cardClass = isExpired ? 'card history-card expired' : 'card history-card';
             const viewBtnClass = isExpired ? 'btn-view expired' : 'btn-view';
             
-            // 這裡把動態消費額補回去了！
             const remainHtml = isExpired 
                 ? `<div class="history-expired-data">狀態：本期已過期 (清零)</div>`
                 : `<div class="history-active-data">剩餘可用: MOP ${itemRemainD} <span style="color:#666; font-size:0.85rem; font-weight:normal; margin-left:5px;">(尚需消費: MOP ${itemRemainS})</span></div>`;
 
-            const div = document.createElement('div');
-            div.className = cardClass;
+            const div = document.createElement('div'); div.className = cardClass;
             div.innerHTML = `
-                <div class="history-header">
-                    <span class="${userTagClass}">${displayUser}</span> 
-                    <span>📅 ${item.date}</span>
-                </div>
+                <div class="history-header"><span class="${userTagClass}">${displayUser}</span><span>📅 ${item.date}</span></div>
                 <div class="history-data">總獲得: MOP ${itemTotalD} | 總消費: MOP ${itemTotalS}</div>
                 ${remainHtml}
                 <div class="history-btns">
@@ -355,7 +321,6 @@
         });
 
         if(displayCount === 0) { list.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">尚無符合條件的紀錄</div>'; }
-
         document.getElementById('grand-total').innerText = grandTotal.toLocaleString();
         document.getElementById('grand-remain').innerText = grandRemain.toLocaleString();
     }
@@ -373,41 +338,23 @@
         const isExpired = entry.date < cycleStartDate;
 
         document.getElementById('modal-date').innerText = entry.date + " 券包 (" + displayUser + ")";
-        const body = document.getElementById('modal-body');
-        body.innerHTML = '';
+        const body = document.getElementById('modal-body'); body.innerHTML = '';
 
         for (const bank in entry.details) {
             let bankHtml = `<div class="detail-row"><div class="detail-bank-name">${bank}</div>`;
-            
             entry.details[bank].forEach((item, index) => {
                 const remain = item.count - item.used;
+                bankHtml += `<div class="detail-item-box"><div class="detail-info"><div>・${item.label}</div><div style="font-size:0.8rem; color:#888; margin-top:2px;">${isExpired ? '共獲得' : '剩 <b style="color:' + (remain>0?'#e74c3c':'#999') + '">' + remain + '</b> / 共'} ${item.count}</div></div><div class="detail-actions">`;
                 
-                bankHtml += `<div class="detail-item-box">
-                    <div class="detail-info">
-                        <div>・${item.label}</div>
-                        <div style="font-size:0.8rem; color:#888; margin-top:2px;">
-                            ${isExpired ? '共獲得' : '剩 <b style="color:' + (remain>0?'#e74c3c':'#999') + '">' + remain + '</b> / 共'} ${item.count}
-                        </div>
-                    </div>
-                    <div class="detail-actions">`;
-                
-                if (isExpired) {
-                    bankHtml += `<span class="status-expired">已過期</span>`;
-                } else {
-                    if(remain > 0) {
-                        bankHtml += `<button class="btn-use" onclick="markCoupon(${entry.id}, '${bank}', ${index}, 1)">用1張</button>`;
-                    } else {
-                        bankHtml += `<span class="status-done">已用完</span>`;
-                    }
-                    if(item.used > 0) {
-                        bankHtml += `<button class="btn-undo" onclick="markCoupon(${entry.id}, '${bank}', ${index}, -1)">復原</button>`;
-                    }
+                if (isExpired) { bankHtml += `<span class="status-expired">已過期</span>`; } 
+                else {
+                    if(remain > 0) { bankHtml += `<button class="btn-use" onclick="markCoupon(${entry.id}, '${bank}', ${index}, 1)">用1張</button>`; } 
+                    else { bankHtml += `<span class="status-done">已用完</span>`; }
+                    if(item.used > 0) { bankHtml += `<button class="btn-undo" onclick="markCoupon(${entry.id}, '${bank}', ${index}, -1)">復原</button>`; }
                 }
-                
                 bankHtml += `</div></div>`;
             });
-            bankHtml += `</div>`;
-            body.innerHTML += bankHtml;
+            bankHtml += `</div>`; body.innerHTML += bankHtml;
         }
         document.getElementById('detail-modal').style.display = 'flex';
     }
@@ -415,28 +362,28 @@
     function markCoupon(id, bank, index, change) {
         const entryIndex = myData.findIndex(i => i.id === id);
         if(entryIndex === -1) return;
+        
+        // 先在本地更新畫面，讓使用者感覺瞬間完成
         let coupon = myData[entryIndex].details[bank][index];
         coupon.used += change;
-        localStorage.setItem('venus_lottery_v4', JSON.stringify(myData));
         renderHistory(); 
         showDetails(id); 
+
+        // 背景傳送更新到雲端
+        apiCall({ action: 'update', id: id, details: myData[entryIndex].details }, null);
     }
 
     function closeModal() { document.getElementById('detail-modal').style.display = 'none'; }
 
     function deleteItemBtn(id) {
-        showConfirm('確定要刪除這筆紀錄嗎？', function() {
-            myData = myData.filter(i => i.id !== id);
-            localStorage.setItem('venus_lottery_v4', JSON.stringify(myData));
-            renderHistory();
+        showConfirm('確定要刪除這筆紀錄嗎？\n(將同時刪除雲端資料)', function() {
+            apiCall({ action: 'delete', id: id }, '✅ 已刪除');
         });
     }
 
     function clearAllDataBtn() {
-        showConfirm('確定要清空這台手機上所有的數據嗎？\n(此動作無法復原)', function() {
-            localStorage.removeItem('venus_lottery_v4');
-            myData = [];
-            renderHistory();
+        showConfirm('⚠️ 警告：這會清空「雲端資料庫」內所有的抽獎數據！\n(您與 Nic 的資料都會不見)', function() {
+            apiCall({ action: 'clearAll' }, '✅ 雲端資料庫已清空');
         });
     }
 </script>
