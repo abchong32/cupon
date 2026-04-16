@@ -28,7 +28,6 @@
         .user-radio:checked + .user-label[for="user-zhuang"] { background: #e8eaf6; border-color: #3f51b5; color: #3f51b5; }
         .user-radio:checked + .user-label[for="user-nic"] { background: #e0f2f1; border-color: #009688; color: #009688; }
         
-        /* 日期框樣式 */
         input.date-input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box; margin-bottom: 15px; background: #fff; text-align: center; font-weight: bold; color: #333;}
 
         .bank-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -76,7 +75,6 @@
         .summary-label { font-size: 0.75rem; opacity: 0.8; }
         .summary-val { font-size: 1.2rem; font-weight: bold; color: #f1c40f; display: block; }
 
-        /* 自訂無網址彈窗樣式 */
         .ios-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 3000; display: none; justify-content: center; align-items: center; }
         .ios-box { background: rgba(255,255,255,0.95); width: 280px; border-radius: 14px; text-align: center; backdrop-filter: blur(10px); box-shadow: 0 4px 20px rgba(0,0,0,0.15); animation: popIn 0.2s ease-out; overflow: hidden; }
         .ios-msg { padding: 25px 15px; font-size: 1.05rem; font-weight: 500; color: #000; border-bottom: 1px solid rgba(0,0,0,0.1); line-height: 1.4; }
@@ -168,7 +166,6 @@
 </div>
 
 <script>
-    // --- 自訂彈窗邏輯 ---
     function showMsg(text) {
         document.getElementById('alert-msg').innerText = text;
         document.getElementById('custom-alert').style.display = 'flex';
@@ -184,7 +181,6 @@
         document.getElementById('custom-confirm').style.display = 'none';
         if(result && confirmCallback) confirmCallback();
     }
-    // -------------------
 
     const banks = ['BOC', '工銀', 'MPAY', '大豐', '支付寶', 'uepay', '國際', '廣發'];
     const couponTypes = [
@@ -218,13 +214,12 @@
         const datePicker = document.getElementById('date-picker');
         const todayStr = getTodayString();
         
-        // 這裡加上 Try-Catch 保護！如果日曆套件被瀏覽器阻擋，網頁就不會白屏，會自動降級回原生版本
         try {
             flatpickr("#date-picker", {
                 locale: "zh",
                 defaultDate: "today",
                 maxDate: "today",
-                disableMobile: true, // 強制手機使用美美的日曆，不用原生的！
+                disableMobile: true,
                 onChange: function(selectedDates, dateStr, instance) {
                     if (dateStr > getTodayString()) {
                         showMsg('請選擇正確的日期');
@@ -233,7 +228,6 @@
                 }
             });
         } catch (error) {
-            // 萬一插件載入失敗的備用方案 (退回原生)
             datePicker.type = 'date';
             datePicker.value = todayStr;
             datePicker.max = todayStr;
@@ -315,11 +309,17 @@
 
             let itemTotalD = 0;
             let itemRemainD = 0;
+            let itemTotalS = 0;    // 總消費額
+            let itemRemainS = 0;   // 剩餘所需消費額
 
             for (const bank in item.details) {
                 item.details[bank].forEach(c => {
                     itemTotalD += c.count * c.d;
                     itemRemainD += (c.count - c.used) * c.d;
+                    
+                    // 計算消費額
+                    itemTotalS += c.count * c.s;
+                    itemRemainS += (c.count - c.used) * c.s;
                 });
             }
             
@@ -331,9 +331,11 @@
             const userTagClass = (displayUser === '🦦莊') ? 'tag-zhuang' : 'tag-nic';
             const cardClass = isExpired ? 'card history-card expired' : 'card history-card';
             const viewBtnClass = isExpired ? 'btn-view expired' : 'btn-view';
+            
+            // 這裡把動態消費額補回去了！
             const remainHtml = isExpired 
                 ? `<div class="history-expired-data">狀態：本期已過期 (清零)</div>`
-                : `<div class="history-active-data">本期可用: MOP ${itemRemainD}</div>`;
+                : `<div class="history-active-data">剩餘可用: MOP ${itemRemainD} <span style="color:#666; font-size:0.85rem; font-weight:normal; margin-left:5px;">(尚需消費: MOP ${itemRemainS})</span></div>`;
 
             const div = document.createElement('div');
             div.className = cardClass;
@@ -342,7 +344,7 @@
                     <span class="${userTagClass}">${displayUser}</span> 
                     <span>📅 ${item.date}</span>
                 </div>
-                <div class="history-data">獲得: MOP ${itemTotalD}</div>
+                <div class="history-data">總獲得: MOP ${itemTotalD} | 總消費: MOP ${itemTotalS}</div>
                 ${remainHtml}
                 <div class="history-btns">
                     <button class="${viewBtnClass}" onclick="showDetails(${item.id})">${isExpired ? '查看明細' : '核銷 / 詳情'}</button>
