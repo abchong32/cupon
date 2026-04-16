@@ -21,8 +21,8 @@
         .user-selector { display: flex; gap: 15px; margin-bottom: 15px; }
         .user-radio { display: none; }
         .user-label { flex: 1; text-align: center; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-weight: bold; color: #555; cursor: pointer; transition: all 0.2s;}
-        .user-radio:checked + .user-label[for="user-c"] { background: #e8eaf6; border-color: #3f51b5; color: #3f51b5; }
-        .user-radio:checked + .user-label[for="user-n"] { background: #e0f2f1; border-color: #009688; color: #009688; }
+        .user-radio:checked + .user-label[for="user-zhuang"] { background: #e8eaf6; border-color: #3f51b5; color: #3f51b5; }
+        .user-radio:checked + .user-label[for="user-nic"] { background: #e0f2f1; border-color: #009688; color: #009688; }
         
         input[type="date"], select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box; margin-bottom: 15px; }
 
@@ -38,8 +38,8 @@
         /* 歷史紀錄與標籤 */
         .history-card { border-left: 5px solid var(--accent); position: relative; }
         .history-header { font-weight: bold; font-size: 0.95rem; color: #333; margin-bottom: 5px; display: flex; align-items: center; gap: 8px;}
-        .tag-c { background: #3f51b5; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; }
-        .tag-n { background: #009688; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; }
+        .tag-zhuang { background: #3f51b5; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; }
+        .tag-nic { background: #009688; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; }
         
         .history-data { color: #666; font-size: 0.85rem; margin-top: 5px; }
         .history-active-data { color: var(--danger); font-size: 0.95rem; font-weight: bold; margin-top: 3px; }
@@ -79,11 +79,11 @@
     <div class="card">
         <span class="label-title">1. 是誰中獎的？</span>
         <div class="user-selector">
-            <input type="radio" name="entry-user" id="user-c" value="C" class="user-radio">
-            <label for="user-c" class="user-label">👤 使用者 C</label>
+            <input type="radio" name="entry-user" id="user-zhuang" value="莊" class="user-radio">
+            <label for="user-zhuang" class="user-label">👤 莊</label>
             
-            <input type="radio" name="entry-user" id="user-n" value="N" class="user-radio">
-            <label for="user-n" class="user-label">👤 使用者 N</label>
+            <input type="radio" name="entry-user" id="user-nic" value="Nic" class="user-radio">
+            <label for="user-nic" class="user-label">👤 Nic</label>
         </div>
 
         <span class="label-title">2. 選擇日期與數量</span>
@@ -97,8 +97,8 @@
         <span class="label-title" style="margin-left: 10px; margin-bottom:0;">歷史明細與核銷</span>
         <select id="filter-user" onchange="renderHistory()" style="width:auto; margin-bottom:0; padding:6px; font-size:0.9rem;">
             <option value="all">顯示所有人</option>
-            <option value="C">只顯示 C 的數據</option>
-            <option value="N">只顯示 N 的數據</option>
+            <option value="莊">只顯示 莊 的數據</option>
+            <option value="Nic">只顯示 Nic 的數據</option>
         </select>
     </div>
     
@@ -142,7 +142,6 @@
         { l: '滿600減200', s: 600, d: 200 }
     ];
 
-    // 更換新的資料庫名稱 v4，避免與之前的數據結構衝突
     let myData = JSON.parse(localStorage.getItem('venus_lottery_v4')) || [];
 
     window.onload = () => {
@@ -164,7 +163,7 @@
     function saveRecord() {
         const userChecked = document.querySelector('input[name="entry-user"]:checked');
         if (!userChecked) {
-            alert('⚠️ 請先選擇是誰中獎的 (C 或 N)！');
+            alert('⚠️ 請先選擇是誰中獎的 (莊 或 Nic)！');
             return;
         }
 
@@ -198,7 +197,6 @@
         
         inputs.forEach(i => i.value = '');
         
-        // 保存後，把篩選器自動切回「所有人」，以免使用者找不到剛存的資料
         document.getElementById('filter-user').value = 'all';
         renderHistory();
         alert('✅ 紀錄成功入庫！');
@@ -214,7 +212,6 @@
         let displayCount = 0;
 
         myData.forEach(item => {
-            // 篩選邏輯
             if (filterVal !== 'all' && item.user !== filterVal) return;
             
             displayCount++;
@@ -230,7 +227,7 @@
             grandTotal += itemTotalD;
             grandRemain += itemRemainD;
             
-            const userTagClass = item.user === 'C' ? 'tag-c' : 'tag-n';
+            const userTagClass = item.user === '莊' ? 'tag-zhuang' : 'tag-nic';
 
             const div = document.createElement('div');
             div.className = 'card history-card';
