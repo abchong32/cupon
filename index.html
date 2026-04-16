@@ -23,7 +23,9 @@
         .user-radio:checked + .user-label[for="user-zhuang"] { background: #e8eaf6; border-color: #3f51b5; color: #3f51b5; }
         .user-radio:checked + .user-label[for="user-nic"] { background: #e0f2f1; border-color: #009688; color: #009688; }
         
+        /* 日期輸入框樣式 */
         input[type="date"], select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box; margin-bottom: 15px; }
+        input[type="date"]:invalid { color: red; } /* 雙重保險：萬一輸入錯誤顯示紅色 */
 
         .bank-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .bank-box { border: 1px solid #edf2f7; border-radius: 10px; padding: 10px; background: #fff; }
@@ -80,11 +82,11 @@
     <div class="card">
         <span class="label-title">1. 是誰中獎的？</span>
         <div class="user-selector">
-            <input type="radio" name="entry-user" id="user-zhuang" value="莊" class="user-radio">
-            <label for="user-zhuang" class="user-label">👤 莊</label>
+            <input type="radio" name="entry-user" id="user-zhuang" value="🦦莊" class="user-radio">
+            <label for="user-zhuang" class="user-label">🦦莊</label>
             
-            <input type="radio" name="entry-user" id="user-nic" value="Nic" class="user-radio">
-            <label for="user-nic" class="user-label">👤 Nic</label>
+            <input type="radio" name="entry-user" id="user-nic" value="😗Nic" class="user-radio">
+            <label for="user-nic" class="user-label">😗Nic</label>
         </div>
 
         <span class="label-title">2. 選擇日期與數量</span>
@@ -98,8 +100,8 @@
         <span class="label-title" style="margin-left: 10px; margin-bottom:0;">歷史明細與核銷</span>
         <select id="filter-user" onchange="renderHistory()" style="width:auto; margin-bottom:0; padding:6px; font-size:0.9rem;">
             <option value="all">顯示所有人</option>
-            <option value="莊">只顯示 莊 的數據</option>
-            <option value="Nic">只顯示 Nic 的數據</option>
+            <option value="🦦莊">只顯示 🦦莊 的數據</option>
+            <option value="😗Nic">只顯示 😗Nic 的數據</option>
         </select>
     </div>
     
@@ -145,10 +147,19 @@
 
     let myData = JSON.parse(localStorage.getItem('venus_lottery_v4')) || [];
 
-    // 取得「最近一個星期五」的日期字串 (YYYY-MM-DD)
+    // 計算今天的日期 (YYYY-MM-DD格式)
+    function getTodayString() {
+        const now = new Date();
+        const yyyy = now.getFullYear();
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
+    // 取得「最近一個星期五」的日期字串
     function getCycleStartDate() {
         let now = new Date();
-        let dayOfWeek = now.getDay(); // 0:Sun, 1:Mon, ..., 5:Fri, 6:Sat
+        let dayOfWeek = now.getDay(); 
         let daysSinceFriday = (dayOfWeek + 2) % 7; 
         let lastFriday = new Date(now);
         lastFriday.setDate(now.getDate() - daysSinceFriday);
@@ -160,7 +171,15 @@
     }
 
     window.onload = () => {
-        document.getElementById('date-picker').valueAsDate = new Date();
+        // 設定日期選擇器
+        const datePicker = document.getElementById('date-picker');
+        const todayStr = getTodayString();
+        
+        // 預設填入今天
+        datePicker.value = todayStr;
+        // 【關鍵防呆】限制最大日期為今天，這樣日曆中的明天以後就會變灰色無法點擊
+        datePicker.max = todayStr;
+
         const container = document.getElementById('bank-container');
         banks.forEach(name => {
             const box = document.createElement('div');
@@ -177,10 +196,16 @@
 
     function saveRecord() {
         const userChecked = document.querySelector('input[name="entry-user"]:checked');
-        if (!userChecked) return alert('⚠️ 請先選擇是誰中獎的 (莊 或 Nic)！');
+        if (!userChecked) return alert('⚠️ 請先選擇是誰中獎的 (🦦莊 或 😗Nic)！');
 
         const user = userChecked.value;
         const date = document.getElementById('date-picker').value;
+        
+        // 雙重防呆：萬一使用者用奇葩方式繞過日曆輸入未來日期
+        if(date > getTodayString()) {
+            return alert('⚠️ 錯誤：不能選擇未來的日期！');
+        }
+
         const inputs = document.querySelectorAll('.num-input');
         let hasData = false;
         let details = {};
@@ -216,14 +241,16 @@
         let grandRemain = 0;
         let displayCount = 0;
 
-        // 計算週期起點
         const cycleStartDate = getCycleStartDate();
 
         myData.forEach(item => {
-            if (filterVal !== 'all' && item.user !== filterVal) return;
+            let displayUser = item.user;
+            if (displayUser === '莊') displayUser = '🦦莊';
+            if (displayUser === 'Nic') displayUser = '😗Nic';
+
+            if (filterVal !== 'all' && displayUser !== filterVal && item.user !== filterVal) return;
             displayCount++;
             
-            // 判斷是否過期 (輸入日期 < 最近的星期五)
             const isExpired = item.date < cycleStartDate;
 
             let itemTotalD = 0;
@@ -237,12 +264,11 @@
             }
             
             grandTotal += itemTotalD;
-            // 只有未過期的紀錄，才會算入「當前剩餘可用金額」
             if (!isExpired) {
                 grandRemain += itemRemainD;
             }
             
-            const userTagClass = item.user === '莊' ? 'tag-zhuang' : 'tag-nic';
+            const userTagClass = (displayUser === '🦦莊') ? 'tag-zhuang' : 'tag-nic';
             const cardClass = isExpired ? 'card history-card expired' : 'card history-card';
             const viewBtnClass = isExpired ? 'btn-view expired' : 'btn-view';
             const remainHtml = isExpired 
@@ -253,7 +279,7 @@
             div.className = cardClass;
             div.innerHTML = `
                 <div class="history-header">
-                    <span class="${userTagClass}">${item.user}</span> 
+                    <span class="${userTagClass}">${displayUser}</span> 
                     <span>📅 ${item.date}</span>
                 </div>
                 <div class="history-data">獲得: MOP ${itemTotalD}</div>
@@ -277,10 +303,14 @@
         if(entryIndex === -1) return;
         const entry = myData[entryIndex];
         
+        let displayUser = entry.user;
+        if (displayUser === '莊') displayUser = '🦦莊';
+        if (displayUser === 'Nic') displayUser = '😗Nic';
+
         const cycleStartDate = getCycleStartDate();
         const isExpired = entry.date < cycleStartDate;
 
-        document.getElementById('modal-date').innerText = entry.date + " 券包 (" + entry.user + ")";
+        document.getElementById('modal-date').innerText = entry.date + " 券包 (" + displayUser + ")";
         const body = document.getElementById('modal-body');
         body.innerHTML = '';
 
