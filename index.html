@@ -23,9 +23,7 @@
         .user-radio:checked + .user-label[for="user-zhuang"] { background: #e8eaf6; border-color: #3f51b5; color: #3f51b5; }
         .user-radio:checked + .user-label[for="user-nic"] { background: #e0f2f1; border-color: #009688; color: #009688; }
         
-        /* 日期輸入框樣式 */
         input[type="date"], select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box; margin-bottom: 15px; }
-        input[type="date"]:invalid { color: red; } /* 雙重保險：萬一輸入錯誤顯示紅色 */
 
         .bank-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .bank-box { border: 1px solid #edf2f7; border-radius: 10px; padding: 10px; background: #fff; }
@@ -147,7 +145,6 @@
 
     let myData = JSON.parse(localStorage.getItem('venus_lottery_v4')) || [];
 
-    // 計算今天的日期 (YYYY-MM-DD格式)
     function getTodayString() {
         const now = new Date();
         const yyyy = now.getFullYear();
@@ -156,7 +153,6 @@
         return `${yyyy}-${mm}-${dd}`;
     }
 
-    // 取得「最近一個星期五」的日期字串
     function getCycleStartDate() {
         let now = new Date();
         let dayOfWeek = now.getDay(); 
@@ -171,14 +167,19 @@
     }
 
     window.onload = () => {
-        // 設定日期選擇器
         const datePicker = document.getElementById('date-picker');
         const todayStr = getTodayString();
         
-        // 預設填入今天
         datePicker.value = todayStr;
-        // 【關鍵防呆】限制最大日期為今天，這樣日曆中的明天以後就會變灰色無法點擊
         datePicker.max = todayStr;
+
+        // 【新增防呆機制】即時監聽日期選擇
+        datePicker.addEventListener('change', function(e) {
+            if (e.target.value > getTodayString()) {
+                alert('請選擇正確的日期');
+                e.target.value = getTodayString(); // 強制重置為今天
+            }
+        });
 
         const container = document.getElementById('bank-container');
         banks.forEach(name => {
@@ -201,9 +202,11 @@
         const user = userChecked.value;
         const date = document.getElementById('date-picker').value;
         
-        // 雙重防呆：萬一使用者用奇葩方式繞過日曆輸入未來日期
+        // 雙重保險
         if(date > getTodayString()) {
-            return alert('⚠️ 錯誤：不能選擇未來的日期！');
+            alert('請選擇正確的日期');
+            document.getElementById('date-picker').value = getTodayString();
+            return;
         }
 
         const inputs = document.querySelectorAll('.num-input');
