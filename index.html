@@ -80,10 +80,10 @@
         <span class="label-title">1. 是誰中獎的？</span>
         <div class="user-selector">
             <input type="radio" name="entry-user" id="user-zhuang" value="莊" class="user-radio">
-            <label for="user-zhuang" class="user-label">👤 莊</label>
+            <label for="user-zhuang" class="user-label">🦦 莊</label>
             
             <input type="radio" name="entry-user" id="user-nic" value="Nic" class="user-radio">
-            <label for="user-nic" class="user-label">👤 Nic</label>
+            <label for="user-nic" class="user-label">😗 Nic</label>
         </div>
 
         <span class="label-title">2. 選擇日期與數量</span>
@@ -163,7 +163,7 @@
     function saveRecord() {
         const userChecked = document.querySelector('input[name="entry-user"]:checked');
         if (!userChecked) {
-            alert('⚠️ 請先選擇是誰中獎的 (莊 或 Nic)！');
+            alert('⚠️ 請先選擇是誰中獎的！');
             return;
         }
 
