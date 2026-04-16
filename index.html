@@ -17,7 +17,6 @@
         .card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
         .label-title { font-weight: bold; color: var(--primary); margin-bottom: 10px; display: block; }
         
-        /* 使用者選擇樣式 */
         .user-selector { display: flex; gap: 15px; margin-bottom: 15px; }
         .user-radio { display: none; }
         .user-label { flex: 1; text-align: center; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-weight: bold; color: #555; cursor: pointer; transition: all 0.2s;}
@@ -35,19 +34,21 @@
 
         .btn-save { width: 100%; background: var(--success); color: white; border: none; padding: 15px; border-radius: 10px; font-size: 1.1rem; font-weight: bold; margin-top: 15px; }
 
-        /* 歷史紀錄與標籤 */
         .history-card { border-left: 5px solid var(--accent); position: relative; }
+        .history-card.expired { border-left-color: #bdc3c7; background: #fafafa; }
         .history-header { font-weight: bold; font-size: 0.95rem; color: #333; margin-bottom: 5px; display: flex; align-items: center; gap: 8px;}
         .tag-zhuang { background: #3f51b5; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; }
         .tag-nic { background: #009688; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; }
         
         .history-data { color: #666; font-size: 0.85rem; margin-top: 5px; }
         .history-active-data { color: var(--danger); font-size: 0.95rem; font-weight: bold; margin-top: 3px; }
+        .history-expired-data { color: #999; font-size: 0.9rem; font-weight: bold; margin-top: 3px; }
+        
         .history-btns { margin-top: 10px; display: flex; gap: 10px; }
         .btn-view { background: #ebf5ff; color: var(--accent); border: 1px solid var(--accent); padding: 5px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; flex: 1;}
+        .btn-view.expired { background: #f0f0f0; color: #666; border-color: #ddd; }
         .btn-del-item { background: #fff; color: #ccc; border: 1px solid #eee; padding: 5px 12px; border-radius: 6px; font-size: 0.85rem; }
 
-        /* 詳情彈窗與核銷按鈕 */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
         .modal-content { background: white; width: 92%; max-width: 450px; border-radius: 15px; padding: 20px; max-height: 85vh; overflow-y: auto; }
         .modal-header { font-weight: bold; font-size: 1.1rem; border-bottom: 2px solid var(--accent); padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; }
@@ -61,10 +62,10 @@
         .btn-use { background: var(--success); color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: bold;}
         .btn-undo { background: #eee; color: #666; border: 1px solid #ccc; padding: 6px 10px; border-radius: 6px; font-size: 0.8rem; }
         .status-done { color: #999; font-size: 0.8rem; font-weight: bold; padding: 6px 10px; background: #f0f0f0; border-radius: 6px;}
+        .status-expired { color: #e74c3c; font-size: 0.8rem; font-weight: bold; padding: 6px 10px; background: #fdeceb; border-radius: 6px;}
 
         .btn-close { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 10px; margin-top: 15px; font-weight: bold; }
 
-        /* 底部總計 */
         .sticky-summary { position: fixed; bottom: 0; left: 0; right: 0; background: var(--primary); color: white; padding: 15px 10px; display: flex; justify-content: space-between; box-shadow: 0 -4px 10px rgba(0,0,0,0.2); z-index: 1000; }
         .summary-box { text-align: center; flex: 1; }
         .summary-label { font-size: 0.75rem; opacity: 0.8; }
@@ -80,10 +81,10 @@
         <span class="label-title">1. 是誰中獎的？</span>
         <div class="user-selector">
             <input type="radio" name="entry-user" id="user-zhuang" value="莊" class="user-radio">
-            <label for="user-zhuang" class="user-label">🦦 莊</label>
+            <label for="user-zhuang" class="user-label">👤 莊</label>
             
             <input type="radio" name="entry-user" id="user-nic" value="Nic" class="user-radio">
-            <label for="user-nic" class="user-label">😗 Nic</label>
+            <label for="user-nic" class="user-label">👤 Nic</label>
         </div>
 
         <span class="label-title">2. 選擇日期與數量</span>
@@ -144,6 +145,20 @@
 
     let myData = JSON.parse(localStorage.getItem('venus_lottery_v4')) || [];
 
+    // 取得「最近一個星期五」的日期字串 (YYYY-MM-DD)
+    function getCycleStartDate() {
+        let now = new Date();
+        let dayOfWeek = now.getDay(); // 0:Sun, 1:Mon, ..., 5:Fri, 6:Sat
+        let daysSinceFriday = (dayOfWeek + 2) % 7; 
+        let lastFriday = new Date(now);
+        lastFriday.setDate(now.getDate() - daysSinceFriday);
+        
+        let yyyy = lastFriday.getFullYear();
+        let mm = String(lastFriday.getMonth() + 1).padStart(2, '0');
+        let dd = String(lastFriday.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
     window.onload = () => {
         document.getElementById('date-picker').valueAsDate = new Date();
         const container = document.getElementById('bank-container');
@@ -162,10 +177,7 @@
 
     function saveRecord() {
         const userChecked = document.querySelector('input[name="entry-user"]:checked');
-        if (!userChecked) {
-            alert('⚠️ 請先選擇是誰中獎的！');
-            return;
-        }
+        if (!userChecked) return alert('⚠️ 請先選擇是誰中獎的 (莊 或 Nic)！');
 
         const user = userChecked.value;
         const date = document.getElementById('date-picker').value;
@@ -178,25 +190,18 @@
             if(val > 0) {
                 const b = i.dataset.bank;
                 if(!details[b]) details[b] = [];
-                details[b].push({ 
-                    label: i.dataset.label, 
-                    count: val, 
-                    used: 0, 
-                    d: parseInt(i.dataset.d), 
-                    s: parseInt(i.dataset.s) 
-                });
+                details[b].push({ label: i.dataset.label, count: val, used: 0, d: parseInt(i.dataset.d), s: parseInt(i.dataset.s) });
                 hasData = true;
             }
         });
 
-        if(!hasData) { alert('請填寫中獎數量！'); return; }
+        if(!hasData) return alert('請填寫中獎數量！');
 
         const entry = { user, date, details, id: Date.now() };
         myData.unshift(entry);
         localStorage.setItem('venus_lottery_v4', JSON.stringify(myData));
         
         inputs.forEach(i => i.value = '');
-        
         document.getElementById('filter-user').value = 'all';
         renderHistory();
         alert('✅ 紀錄成功入庫！');
@@ -211,10 +216,16 @@
         let grandRemain = 0;
         let displayCount = 0;
 
+        // 計算週期起點
+        const cycleStartDate = getCycleStartDate();
+
         myData.forEach(item => {
             if (filterVal !== 'all' && item.user !== filterVal) return;
-            
             displayCount++;
+            
+            // 判斷是否過期 (輸入日期 < 最近的星期五)
+            const isExpired = item.date < cycleStartDate;
+
             let itemTotalD = 0;
             let itemRemainD = 0;
 
@@ -224,31 +235,38 @@
                     itemRemainD += (c.count - c.used) * c.d;
                 });
             }
+            
             grandTotal += itemTotalD;
-            grandRemain += itemRemainD;
+            // 只有未過期的紀錄，才會算入「當前剩餘可用金額」
+            if (!isExpired) {
+                grandRemain += itemRemainD;
+            }
             
             const userTagClass = item.user === '莊' ? 'tag-zhuang' : 'tag-nic';
+            const cardClass = isExpired ? 'card history-card expired' : 'card history-card';
+            const viewBtnClass = isExpired ? 'btn-view expired' : 'btn-view';
+            const remainHtml = isExpired 
+                ? `<div class="history-expired-data">狀態：本期已過期 (清零)</div>`
+                : `<div class="history-active-data">本期可用: MOP ${itemRemainD}</div>`;
 
             const div = document.createElement('div');
-            div.className = 'card history-card';
+            div.className = cardClass;
             div.innerHTML = `
                 <div class="history-header">
                     <span class="${userTagClass}">${item.user}</span> 
                     <span>📅 ${item.date}</span>
                 </div>
                 <div class="history-data">獲得: MOP ${itemTotalD}</div>
-                <div class="history-active-data">剩餘: MOP ${itemRemainD}</div>
+                ${remainHtml}
                 <div class="history-btns">
-                    <button class="btn-view" onclick="showDetails(${item.id})">核銷 / 詳情</button>
+                    <button class="${viewBtnClass}" onclick="showDetails(${item.id})">${isExpired ? '查看明細' : '核銷 / 詳情'}</button>
                     <button class="btn-del-item" onclick="deleteItem(${item.id})">刪除</button>
                 </div>
             `;
             list.appendChild(div);
         });
 
-        if(displayCount === 0) {
-            list.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">尚無符合條件的紀錄</div>';
-        }
+        if(displayCount === 0) { list.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">尚無符合條件的紀錄</div>'; }
 
         document.getElementById('grand-total').innerText = grandTotal.toLocaleString();
         document.getElementById('grand-remain').innerText = grandRemain.toLocaleString();
@@ -258,6 +276,9 @@
         const entryIndex = myData.findIndex(i => i.id === id);
         if(entryIndex === -1) return;
         const entry = myData[entryIndex];
+        
+        const cycleStartDate = getCycleStartDate();
+        const isExpired = entry.date < cycleStartDate;
 
         document.getElementById('modal-date').innerText = entry.date + " 券包 (" + entry.user + ")";
         const body = document.getElementById('modal-body');
@@ -273,19 +294,22 @@
                     <div class="detail-info">
                         <div>・${item.label}</div>
                         <div style="font-size:0.8rem; color:#888; margin-top:2px;">
-                            剩 <b style="color:${remain>0?'#e74c3c':'#999'}">${remain}</b> / 共 ${item.count}
+                            ${isExpired ? '共獲得' : '剩 <b style="color:' + (remain>0?'#e74c3c':'#999') + '">' + remain + '</b> / 共'} ${item.count}
                         </div>
                     </div>
                     <div class="detail-actions">`;
                 
-                if(remain > 0) {
-                    bankHtml += `<button class="btn-use" onclick="markCoupon(${entry.id}, '${bank}', ${index}, 1)">用1張</button>`;
+                if (isExpired) {
+                    bankHtml += `<span class="status-expired">已過期</span>`;
                 } else {
-                    bankHtml += `<span class="status-done">已用完</span>`;
-                }
-
-                if(item.used > 0) {
-                    bankHtml += `<button class="btn-undo" onclick="markCoupon(${entry.id}, '${bank}', ${index}, -1)">復原</button>`;
+                    if(remain > 0) {
+                        bankHtml += `<button class="btn-use" onclick="markCoupon(${entry.id}, '${bank}', ${index}, 1)">用1張</button>`;
+                    } else {
+                        bankHtml += `<span class="status-done">已用完</span>`;
+                    }
+                    if(item.used > 0) {
+                        bankHtml += `<button class="btn-undo" onclick="markCoupon(${entry.id}, '${bank}', ${index}, -1)">復原</button>`;
+                    }
                 }
                 
                 bankHtml += `</div></div>`;
@@ -299,10 +323,8 @@
     function markCoupon(id, bank, index, change) {
         const entryIndex = myData.findIndex(i => i.id === id);
         if(entryIndex === -1) return;
-
         let coupon = myData[entryIndex].details[bank][index];
         coupon.used += change;
-
         localStorage.setItem('venus_lottery_v4', JSON.stringify(myData));
         renderHistory(); 
         showDetails(id); 
