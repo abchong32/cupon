@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>2026消費抽獎紀錄</title>
+    <title>活動抽獎與核銷紀錄</title>
     <style>
         :root {
             --primary: #2c3e50;
@@ -12,16 +12,19 @@
             --danger: #e74c3c;
             --light-bg: #f0f2f5;
         }
-        body {
-            font-family: -apple-system, sans-serif;
-            background-color: var(--light-bg);
-            margin: 0; padding: 10px; padding-bottom: 140px;
-        }
+        body { font-family: -apple-system, sans-serif; background-color: var(--light-bg); margin: 0; padding: 10px; padding-bottom: 140px; }
         .container { max-width: 600px; margin: auto; }
         .card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
         .label-title { font-weight: bold; color: var(--primary); margin-bottom: 10px; display: block; }
         
-        input[type="date"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box; margin-bottom: 15px; }
+        /* 使用者選擇樣式 */
+        .user-selector { display: flex; gap: 15px; margin-bottom: 15px; }
+        .user-radio { display: none; }
+        .user-label { flex: 1; text-align: center; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-weight: bold; color: #555; cursor: pointer; transition: all 0.2s;}
+        .user-radio:checked + .user-label[for="user-c"] { background: #e8eaf6; border-color: #3f51b5; color: #3f51b5; }
+        .user-radio:checked + .user-label[for="user-n"] { background: #e0f2f1; border-color: #009688; color: #009688; }
+        
+        input[type="date"], select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box; margin-bottom: 15px; }
 
         .bank-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .bank-box { border: 1px solid #edf2f7; border-radius: 10px; padding: 10px; background: #fff; }
@@ -32,24 +35,37 @@
 
         .btn-save { width: 100%; background: var(--success); color: white; border: none; padding: 15px; border-radius: 10px; font-size: 1.1rem; font-weight: bold; margin-top: 15px; }
 
-        /* 歷史紀錄樣式 */
+        /* 歷史紀錄與標籤 */
         .history-card { border-left: 5px solid var(--accent); position: relative; }
-        .history-header { font-weight: bold; font-size: 0.95rem; color: #333; margin-bottom: 5px; }
-        .history-data { color: var(--danger); font-size: 0.9rem; font-weight: bold; }
+        .history-header { font-weight: bold; font-size: 0.95rem; color: #333; margin-bottom: 5px; display: flex; align-items: center; gap: 8px;}
+        .tag-c { background: #3f51b5; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; }
+        .tag-n { background: #009688; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; }
+        
+        .history-data { color: #666; font-size: 0.85rem; margin-top: 5px; }
+        .history-active-data { color: var(--danger); font-size: 0.95rem; font-weight: bold; margin-top: 3px; }
         .history-btns { margin-top: 10px; display: flex; gap: 10px; }
-        .btn-view { background: #ebf5ff; color: var(--accent); border: 1px solid var(--accent); padding: 5px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; }
+        .btn-view { background: #ebf5ff; color: var(--accent); border: 1px solid var(--accent); padding: 5px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; flex: 1;}
         .btn-del-item { background: #fff; color: #ccc; border: 1px solid #eee; padding: 5px 12px; border-radius: 6px; font-size: 0.85rem; }
 
-        /* 詳情彈窗樣式 */
+        /* 詳情彈窗與核銷按鈕 */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
-        .modal-content { background: white; width: 90%; max-width: 400px; border-radius: 20px; padding: 20px; max-height: 80vh; overflow-y: auto; }
-        .modal-header { font-weight: bold; font-size: 1.2rem; border-bottom: 2px solid var(--accent); padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; }
-        .detail-row { margin-bottom: 15px; }
-        .detail-bank-name { color: var(--accent); font-weight: bold; font-size: 1rem; margin-bottom: 5px; }
-        .detail-item { font-size: 0.9rem; padding-left: 10px; color: #555; }
-        .btn-close { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 10px; margin-top: 20px; font-weight: bold; }
+        .modal-content { background: white; width: 92%; max-width: 450px; border-radius: 15px; padding: 20px; max-height: 85vh; overflow-y: auto; }
+        .modal-header { font-weight: bold; font-size: 1.1rem; border-bottom: 2px solid var(--accent); padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between; }
+        .detail-row { margin-bottom: 15px; background: #f9fbfd; padding: 10px; border-radius: 8px;}
+        .detail-bank-name { color: var(--accent); font-weight: bold; font-size: 1rem; margin-bottom: 8px; border-bottom: 1px dashed #ddd; padding-bottom: 5px;}
+        
+        .detail-item-box { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.9rem; }
+        .detail-info { flex: 1; }
+        .detail-actions { display: flex; gap: 5px; }
+        
+        .btn-use { background: var(--success); color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: bold;}
+        .btn-undo { background: #eee; color: #666; border: 1px solid #ccc; padding: 6px 10px; border-radius: 6px; font-size: 0.8rem; }
+        .status-done { color: #999; font-size: 0.8rem; font-weight: bold; padding: 6px 10px; background: #f0f0f0; border-radius: 6px;}
 
-        .sticky-summary { position: fixed; bottom: 0; left: 0; right: 0; background: var(--primary); color: white; padding: 15px 20px; display: flex; justify-content: space-between; box-shadow: 0 -4px 10px rgba(0,0,0,0.2); z-index: 1000; }
+        .btn-close { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 10px; margin-top: 15px; font-weight: bold; }
+
+        /* 底部總計 */
+        .sticky-summary { position: fixed; bottom: 0; left: 0; right: 0; background: var(--primary); color: white; padding: 15px 10px; display: flex; justify-content: space-between; box-shadow: 0 -4px 10px rgba(0,0,0,0.2); z-index: 1000; }
         .summary-box { text-align: center; flex: 1; }
         .summary-label { font-size: 0.75rem; opacity: 0.8; }
         .summary-val { font-size: 1.2rem; font-weight: bold; color: #f1c40f; display: block; }
@@ -58,18 +74,34 @@
 <body>
 
 <div class="container">
-    <h1>🧧 2026消費抽獎紀錄</h1>
+    <h1>🧧 活動抽獎與核銷紀錄</h1>
 
     <div class="card">
-        <span class="label-title">1. 選擇抽獎日期</span>
+        <span class="label-title">1. 是誰中獎的？</span>
+        <div class="user-selector">
+            <input type="radio" name="entry-user" id="user-c" value="C" class="user-radio">
+            <label for="user-c" class="user-label">👤 使用者 C</label>
+            
+            <input type="radio" name="entry-user" id="user-n" value="N" class="user-radio">
+            <label for="user-n" class="user-label">👤 使用者 N</label>
+        </div>
+
+        <span class="label-title">2. 選擇日期與數量</span>
         <input type="date" id="date-picker">
         
-        <span class="label-title">2. 輸入各銀行中獎數量</span>
         <div id="bank-container" class="bank-grid"></div>
-        <button class="btn-save" onclick="saveRecord()">保存本次抽獎</button>
+        <button class="btn-save" onclick="saveRecord()">保存入庫</button>
     </div>
 
-    <span class="label-title" style="margin-left: 10px;">翻查歷史明細</span>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <span class="label-title" style="margin-left: 10px; margin-bottom:0;">歷史明細與核銷</span>
+        <select id="filter-user" onchange="renderHistory()" style="width:auto; margin-bottom:0; padding:6px; font-size:0.9rem;">
+            <option value="all">顯示所有人</option>
+            <option value="C">只顯示 C 的數據</option>
+            <option value="N">只顯示 N 的數據</option>
+        </select>
+    </div>
+    
     <div id="history-container"></div>
 
     <div style="text-align: center; margin-top: 30px;">
@@ -81,7 +113,7 @@
     <div class="modal-content">
         <div class="modal-header">
             <span id="modal-date">日期</span>
-            <span onclick="closeModal()" style="color:#ccc; cursor:pointer;">✕</span>
+            <span onclick="closeModal()" style="color:#ccc; cursor:pointer; font-size:1.2rem;">✕</span>
         </div>
         <div id="modal-body"></div>
         <button class="btn-close" onclick="closeModal()">關閉窗口</button>
@@ -90,13 +122,13 @@
 
 <div class="sticky-summary">
     <div class="summary-box">
-        <span class="summary-label">累積中獎總額</span>
-        <span class="summary-val">MOP <span id="grand-discount">0</span></span>
+        <span class="summary-label">活動期間總中獎金額</span>
+        <span class="summary-val" style="color:#fff;">MOP <span id="grand-total">0</span></span>
     </div>
-    <div style="width: 1px; background: rgba(255,255,255,0.2); margin: 0 15px;"></div>
+    <div style="width: 1px; background: rgba(255,255,255,0.2); margin: 0 10px;"></div>
     <div class="summary-box">
-        <span class="summary-label">累積需消費額</span>
-        <span class="summary-val">MOP <span id="grand-spend">0</span></span>
+        <span class="summary-label">當前剩餘可用金額</span>
+        <span class="summary-val">MOP <span id="grand-remain">0</span></span>
     </div>
 </div>
 
@@ -110,7 +142,8 @@
         { l: '滿600減200', s: 600, d: 200 }
     ];
 
-    let myData = JSON.parse(localStorage.getItem('venus_lottery_v2')) || [];
+    // 更換新的資料庫名稱 v4，避免與之前的數據結構衝突
+    let myData = JSON.parse(localStorage.getItem('venus_lottery_v4')) || [];
 
     window.onload = () => {
         document.getElementById('date-picker').valueAsDate = new Date();
@@ -119,7 +152,7 @@
             const box = document.createElement('div');
             box.className = 'bank-box';
             let html = `<div class="bank-title">${name}</div>`;
-            couponTypes.forEach((c, idx) => {
+            couponTypes.forEach(c => {
                 html += `<div class="coupon-input"><span>${c.l}</span><input type="number" class="num-input" data-bank="${name}" data-label="${c.l}" data-s="${c.s}" data-d="${c.d}" min="0" placeholder="0" inputmode="numeric"></div>`;
             });
             box.innerHTML = html;
@@ -129,73 +162,136 @@
     };
 
     function saveRecord() {
+        const userChecked = document.querySelector('input[name="entry-user"]:checked');
+        if (!userChecked) {
+            alert('⚠️ 請先選擇是誰中獎的 (C 或 N)！');
+            return;
+        }
+
+        const user = userChecked.value;
         const date = document.getElementById('date-picker').value;
         const inputs = document.querySelectorAll('.num-input');
-        let dSum = 0, sSum = 0, hasData = false;
+        let hasData = false;
         let details = {};
 
         inputs.forEach(i => {
             const val = parseInt(i.value) || 0;
             if(val > 0) {
                 const b = i.dataset.bank;
-                const l = i.dataset.label;
-                dSum += val * parseInt(i.dataset.d);
-                sSum += val * parseInt(i.dataset.s);
                 if(!details[b]) details[b] = [];
-                details[b].push({ label: l, count: val });
+                details[b].push({ 
+                    label: i.dataset.label, 
+                    count: val, 
+                    used: 0, 
+                    d: parseInt(i.dataset.d), 
+                    s: parseInt(i.dataset.s) 
+                });
                 hasData = true;
             }
         });
 
         if(!hasData) { alert('請填寫中獎數量！'); return; }
 
-        const entry = { date, discount: dSum, spend: sSum, details, id: Date.now() };
+        const entry = { user, date, details, id: Date.now() };
         myData.unshift(entry);
-        localStorage.setItem('venus_lottery_v2', JSON.stringify(myData));
+        localStorage.setItem('venus_lottery_v4', JSON.stringify(myData));
         
         inputs.forEach(i => i.value = '');
+        
+        // 保存後，把篩選器自動切回「所有人」，以免使用者找不到剛存的資料
+        document.getElementById('filter-user').value = 'all';
         renderHistory();
-        alert('紀錄成功！');
+        alert('✅ 紀錄成功入庫！');
     }
 
     function renderHistory() {
+        const filterVal = document.getElementById('filter-user').value;
         const list = document.getElementById('history-container');
-        list.innerHTML = myData.length === 0 ? '<div style="text-align:center;color:#999;padding:20px;">尚無紀錄</div>' : '';
+        list.innerHTML = '';
         
-        let totalD = 0, totalS = 0;
+        let grandTotal = 0;
+        let grandRemain = 0;
+        let displayCount = 0;
+
         myData.forEach(item => {
-            totalD += item.discount;
-            totalS += item.spend;
+            // 篩選邏輯
+            if (filterVal !== 'all' && item.user !== filterVal) return;
             
+            displayCount++;
+            let itemTotalD = 0;
+            let itemRemainD = 0;
+
+            for (const bank in item.details) {
+                item.details[bank].forEach(c => {
+                    itemTotalD += c.count * c.d;
+                    itemRemainD += (c.count - c.used) * c.d;
+                });
+            }
+            grandTotal += itemTotalD;
+            grandRemain += itemRemainD;
+            
+            const userTagClass = item.user === 'C' ? 'tag-c' : 'tag-n';
+
             const div = document.createElement('div');
             div.className = 'card history-card';
             div.innerHTML = `
-                <div class="history-header">📅 ${item.date}</div>
-                <div class="history-data">總獎: MOP ${item.discount.toLocaleString()} | 總消: MOP ${item.spend.toLocaleString()}</div>
+                <div class="history-header">
+                    <span class="${userTagClass}">${item.user}</span> 
+                    <span>📅 ${item.date}</span>
+                </div>
+                <div class="history-data">獲得: MOP ${itemTotalD}</div>
+                <div class="history-active-data">剩餘: MOP ${itemRemainD}</div>
                 <div class="history-btns">
-                    <button class="btn-view" onclick="showDetails(${item.id})">查看中獎詳情</button>
+                    <button class="btn-view" onclick="showDetails(${item.id})">核銷 / 詳情</button>
                     <button class="btn-del-item" onclick="deleteItem(${item.id})">刪除</button>
                 </div>
             `;
             list.appendChild(div);
         });
 
-        document.getElementById('grand-discount').innerText = totalD.toLocaleString();
-        document.getElementById('grand-spend').innerText = totalS.toLocaleString();
+        if(displayCount === 0) {
+            list.innerHTML = '<div style="text-align:center;color:#999;padding:20px;">尚無符合條件的紀錄</div>';
+        }
+
+        document.getElementById('grand-total').innerText = grandTotal.toLocaleString();
+        document.getElementById('grand-remain').innerText = grandRemain.toLocaleString();
     }
 
     function showDetails(id) {
-        const entry = myData.find(i => i.id === id);
-        if(!entry) return;
+        const entryIndex = myData.findIndex(i => i.id === id);
+        if(entryIndex === -1) return;
+        const entry = myData[entryIndex];
 
-        document.getElementById('modal-date').innerText = entry.date + " 詳情";
+        document.getElementById('modal-date').innerText = entry.date + " 券包 (" + entry.user + ")";
         const body = document.getElementById('modal-body');
         body.innerHTML = '';
 
         for (const bank in entry.details) {
             let bankHtml = `<div class="detail-row"><div class="detail-bank-name">${bank}</div>`;
-            entry.details[bank].forEach(item => {
-                bankHtml += `<div class="detail-item">・${item.label}： ${item.count} 張</div>`;
+            
+            entry.details[bank].forEach((item, index) => {
+                const remain = item.count - item.used;
+                
+                bankHtml += `<div class="detail-item-box">
+                    <div class="detail-info">
+                        <div>・${item.label}</div>
+                        <div style="font-size:0.8rem; color:#888; margin-top:2px;">
+                            剩 <b style="color:${remain>0?'#e74c3c':'#999'}">${remain}</b> / 共 ${item.count}
+                        </div>
+                    </div>
+                    <div class="detail-actions">`;
+                
+                if(remain > 0) {
+                    bankHtml += `<button class="btn-use" onclick="markCoupon(${entry.id}, '${bank}', ${index}, 1)">用1張</button>`;
+                } else {
+                    bankHtml += `<span class="status-done">已用完</span>`;
+                }
+
+                if(item.used > 0) {
+                    bankHtml += `<button class="btn-undo" onclick="markCoupon(${entry.id}, '${bank}', ${index}, -1)">復原</button>`;
+                }
+                
+                bankHtml += `</div></div>`;
             });
             bankHtml += `</div>`;
             body.innerHTML += bankHtml;
@@ -203,19 +299,31 @@
         document.getElementById('detail-modal').style.display = 'flex';
     }
 
+    function markCoupon(id, bank, index, change) {
+        const entryIndex = myData.findIndex(i => i.id === id);
+        if(entryIndex === -1) return;
+
+        let coupon = myData[entryIndex].details[bank][index];
+        coupon.used += change;
+
+        localStorage.setItem('venus_lottery_v4', JSON.stringify(myData));
+        renderHistory(); 
+        showDetails(id); 
+    }
+
     function closeModal() { document.getElementById('detail-modal').style.display = 'none'; }
 
     function deleteItem(id) {
         if(confirm('確定要刪除這筆紀錄嗎？')) {
             myData = myData.filter(i => i.id !== id);
-            localStorage.setItem('venus_lottery_v2', JSON.stringify(myData));
+            localStorage.setItem('venus_lottery_v4', JSON.stringify(myData));
             renderHistory();
         }
     }
 
     function clearAllData() {
-        if(confirm('確定要清空所有數據嗎？')) {
-            localStorage.removeItem('venus_lottery_v2');
+        if(confirm('⚠️ 確定要清空這台手機上所有的數據嗎？')) {
+            localStorage.removeItem('venus_lottery_v4');
             myData = [];
             renderHistory();
         }
