@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>活動抽獎與核銷紀錄</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/zh.js"></script>
+
     <style>
         :root {
             --primary: #2c3e50;
@@ -23,7 +28,8 @@
         .user-radio:checked + .user-label[for="user-zhuang"] { background: #e8eaf6; border-color: #3f51b5; color: #3f51b5; }
         .user-radio:checked + .user-label[for="user-nic"] { background: #e0f2f1; border-color: #009688; color: #009688; }
         
-        input[type="date"], select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box; margin-bottom: 15px; }
+        /* 這裡把 input 改為 text 以便 Flatpickr 接管 */
+        input[type="text"].date-input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box; margin-bottom: 15px; background: #fff; text-align: center; font-weight: bold; color: #333;}
 
         .bank-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .bank-box { border: 1px solid #edf2f7; border-radius: 10px; padding: 10px; background: #fff; }
@@ -63,13 +69,22 @@
         .btn-undo { background: #eee; color: #666; border: 1px solid #ccc; padding: 6px 10px; border-radius: 6px; font-size: 0.8rem; }
         .status-done { color: #999; font-size: 0.8rem; font-weight: bold; padding: 6px 10px; background: #f0f0f0; border-radius: 6px;}
         .status-expired { color: #e74c3c; font-size: 0.8rem; font-weight: bold; padding: 6px 10px; background: #fdeceb; border-radius: 6px;}
-
         .btn-close { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 10px; margin-top: 15px; font-weight: bold; }
 
         .sticky-summary { position: fixed; bottom: 0; left: 0; right: 0; background: var(--primary); color: white; padding: 15px 10px; display: flex; justify-content: space-between; box-shadow: 0 -4px 10px rgba(0,0,0,0.2); z-index: 1000; }
         .summary-box { text-align: center; flex: 1; }
         .summary-label { font-size: 0.75rem; opacity: 0.8; }
         .summary-val { font-size: 1.2rem; font-weight: bold; color: #f1c40f; display: block; }
+
+        /* 自訂無網址彈窗樣式 (取代原生的 Alert 和 Confirm) */
+        .ios-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 3000; display: none; justify-content: center; align-items: center; }
+        .ios-box { background: rgba(255,255,255,0.95); width: 280px; border-radius: 14px; text-align: center; backdrop-filter: blur(10px); box-shadow: 0 4px 20px rgba(0,0,0,0.15); animation: popIn 0.2s ease-out; overflow: hidden; }
+        .ios-msg { padding: 20px 15px; font-size: 1rem; font-weight: 500; color: #000; border-bottom: 1px solid rgba(0,0,0,0.1); line-height: 1.4; }
+        .ios-btn-group { display: flex; }
+        .ios-btn { flex: 1; padding: 14px; font-size: 1.05rem; font-weight: bold; cursor: pointer; color: #007aff; }
+        .ios-btn.cancel { color: #ff3b30; border-right: 1px solid rgba(0,0,0,0.1); }
+        .ios-btn:active { background: rgba(0,0,0,0.05); }
+        @keyframes popIn { from { transform: scale(1.1); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body>
@@ -88,7 +103,7 @@
         </div>
 
         <span class="label-title">2. 選擇日期與數量</span>
-        <input type="date" id="date-picker">
+        <input type="text" id="date-picker" class="date-input" readonly>
         
         <div id="bank-container" class="bank-grid"></div>
         <button class="btn-save" onclick="saveRecord()">保存入庫</button>
@@ -106,7 +121,7 @@
     <div id="history-container"></div>
 
     <div style="text-align: center; margin-top: 30px;">
-        <button onclick="clearAllData()" style="color:#999; border:none; background:none; font-size:0.8rem; text-decoration: underline;">清空所有歷史數據</button>
+        <button onclick="clearAllDataBtn()" style="color:#999; border:none; background:none; font-size:0.8rem; text-decoration: underline;">清空所有歷史數據</button>
     </div>
 </div>
 
@@ -133,7 +148,44 @@
     </div>
 </div>
 
+<div id="custom-alert" class="ios-overlay">
+    <div class="ios-box">
+        <div class="ios-msg" id="alert-msg"></div>
+        <div class="ios-btn-group">
+            <div class="ios-btn" onclick="document.getElementById('custom-alert').style.display='none'">確定</div>
+        </div>
+    </div>
+</div>
+
+<div id="custom-confirm" class="ios-overlay">
+    <div class="ios-box">
+        <div class="ios-msg" id="confirm-msg"></div>
+        <div class="ios-btn-group">
+            <div class="ios-btn cancel" onclick="closeCustomConfirm(false)">取消</div>
+            <div class="ios-btn" onclick="closeCustomConfirm(true)">確定</div>
+        </div>
+    </div>
+</div>
+
 <script>
+    // ----------------- 自訂彈窗邏輯 -----------------
+    function showMsg(text) {
+        document.getElementById('alert-msg').innerText = text;
+        document.getElementById('custom-alert').style.display = 'flex';
+    }
+
+    let confirmCallback = null;
+    function showConfirm(text, callback) {
+        document.getElementById('confirm-msg').innerText = text;
+        document.getElementById('custom-confirm').style.display = 'flex';
+        confirmCallback = callback;
+    }
+    function closeCustomConfirm(result) {
+        document.getElementById('custom-confirm').style.display = 'none';
+        if(result && confirmCallback) confirmCallback();
+    }
+    // ------------------------------------------------
+
     const banks = ['BOC', '工銀', 'MPAY', '大豐', '支付寶', 'uepay', '國際', '廣發'];
     const couponTypes = [
         { l: '滿30減10', s: 30, d: 10 },
@@ -159,26 +211,16 @@
         let daysSinceFriday = (dayOfWeek + 2) % 7; 
         let lastFriday = new Date(now);
         lastFriday.setDate(now.getDate() - daysSinceFriday);
-        
-        let yyyy = lastFriday.getFullYear();
-        let mm = String(lastFriday.getMonth() + 1).padStart(2, '0');
-        let dd = String(lastFriday.getDate()).padStart(2, '0');
-        return `${yyyy}-${mm}-${dd}`;
+        return `${lastFriday.getFullYear()}-${String(lastFriday.getMonth() + 1).padStart(2, '0')}-${String(lastFriday.getDate()).padStart(2, '0')}`;
     }
 
     window.onload = () => {
-        const datePicker = document.getElementById('date-picker');
-        const todayStr = getTodayString();
-        
-        datePicker.value = todayStr;
-        datePicker.max = todayStr;
-
-        // 【新增防呆機制】即時監聽日期選擇
-        datePicker.addEventListener('change', function(e) {
-            if (e.target.value > getTodayString()) {
-                alert('請選擇正確的日期');
-                e.target.value = getTodayString(); // 強制重置為今天
-            }
+        // 啟用精美的 Flatpickr 日曆套件
+        flatpickr("#date-picker", {
+            locale: "zh",
+            maxDate: "today",     // 直接讓未來日期變成灰色且不可點擊
+            defaultDate: "today", // 預設顯示今天
+            disableMobile: "true" // 關閉手機內建滾輪，強制使用美美的日曆 UI
         });
 
         const container = document.getElementById('bank-container');
@@ -197,14 +239,14 @@
 
     function saveRecord() {
         const userChecked = document.querySelector('input[name="entry-user"]:checked');
-        if (!userChecked) return alert('⚠️ 請先選擇是誰中獎的 (🦦莊 或 😗Nic)！');
+        if (!userChecked) return showMsg('請先選擇是誰中獎的 (🦦莊 或 😗Nic)！');
 
         const user = userChecked.value;
         const date = document.getElementById('date-picker').value;
         
-        // 雙重保險
+        // 保險防呆機制
         if(date > getTodayString()) {
-            alert('請選擇正確的日期');
+            showMsg('請選擇正確的日期');
             document.getElementById('date-picker').value = getTodayString();
             return;
         }
@@ -223,7 +265,7 @@
             }
         });
 
-        if(!hasData) return alert('請填寫中獎數量！');
+        if(!hasData) return showMsg('請填寫中獎數量！');
 
         const entry = { user, date, details, id: Date.now() };
         myData.unshift(entry);
@@ -232,7 +274,7 @@
         inputs.forEach(i => i.value = '');
         document.getElementById('filter-user').value = 'all';
         renderHistory();
-        alert('✅ 紀錄成功入庫！');
+        showMsg('✅ 紀錄成功入庫！');
     }
 
     function renderHistory() {
@@ -289,7 +331,7 @@
                 ${remainHtml}
                 <div class="history-btns">
                     <button class="${viewBtnClass}" onclick="showDetails(${item.id})">${isExpired ? '查看明細' : '核銷 / 詳情'}</button>
-                    <button class="btn-del-item" onclick="deleteItem(${item.id})">刪除</button>
+                    <button class="btn-del-item" onclick="deleteItemBtn(${item.id})">刪除</button>
                 </div>
             `;
             list.appendChild(div);
@@ -365,20 +407,22 @@
 
     function closeModal() { document.getElementById('detail-modal').style.display = 'none'; }
 
-    function deleteItem(id) {
-        if(confirm('確定要刪除這筆紀錄嗎？')) {
+    // 取代原本的確認刪除功能
+    function deleteItemBtn(id) {
+        showConfirm('確定要刪除這筆紀錄嗎？', function() {
             myData = myData.filter(i => i.id !== id);
             localStorage.setItem('venus_lottery_v4', JSON.stringify(myData));
             renderHistory();
-        }
+        });
     }
 
-    function clearAllData() {
-        if(confirm('⚠️ 確定要清空這台手機上所有的數據嗎？')) {
+    // 取代原本的清空資料功能
+    function clearAllDataBtn() {
+        showConfirm('確定要清空這台手機上所有的數據嗎？\n(此動作無法復原)', function() {
             localStorage.removeItem('venus_lottery_v4');
             myData = [];
             renderHistory();
-        }
+        });
     }
 </script>
 
