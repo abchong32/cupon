@@ -142,7 +142,6 @@
 <div id="custom-confirm" class="ios-overlay"><div class="ios-box"><div class="ios-msg" id="confirm-msg"></div><div class="ios-btn-group"><div class="ios-btn cancel" onclick="closeCustomConfirm(false)">取消</div><div class="ios-btn" onclick="closeCustomConfirm(true)">確定</div></div></div></div>
 
 <script>
-    // 已經將您提供的 Google API URL 放入代碼中
     const API_URL = "https://script.google.com/macros/s/AKfycbyp1GKlRG-cVm6F9PoUK4DTD4j2ZEukoCUeZR_IHSu8GjcXAiBjh7O3TGCo-ozBR76kmQ/exec"; 
 
     function showLoading() { document.getElementById('loading-overlay').style.display = 'flex'; }
@@ -195,7 +194,9 @@
     };
 
     function fetchDataFromCloud() {
-        fetch(API_URL)
+        // 加入時間戳，防止 Safari 或微信偷偷緩存舊資料 (這招保證刪除後立刻刷新！)
+        const noCacheUrl = API_URL + "?t=" + new Date().getTime();
+        fetch(noCacheUrl)
             .then(res => res.json())
             .then(data => {
                 myData = data;
@@ -218,7 +219,7 @@
                 fetchDataFromCloud();
                 if(successMsg) showMsg(successMsg);
             } else {
-                hideLoading(); showMsg('儲存失敗，請重試！');
+                hideLoading(); showMsg('操作失敗，請重試！');
             }
         }).catch(err => {
             hideLoading(); showMsg('連線失敗，請檢查網路');
@@ -249,14 +250,11 @@
 
         if(!hasData) return showMsg('請填寫中獎數量！');
 
-        // ==== 合併邏輯開始 ====
-        // 檢查是否已有相同日期與使用者的紀錄
         const existingIndex = myData.findIndex(item => item.date === date && item.user === user);
 
         if (existingIndex !== -1) {
             let existingEntry = myData[existingIndex];
             
-            // 進行資料合併
             for (const bank in tempDetails) {
                 if (!existingEntry.details[bank]) {
                     existingEntry.details[bank] = tempDetails[bank];
@@ -264,9 +262,9 @@
                     tempDetails[bank].forEach(newCoupon => {
                         let existingCoupon = existingEntry.details[bank].find(c => c.label === newCoupon.label);
                         if (existingCoupon) {
-                            existingCoupon.count += newCoupon.count; // 疊加數量
+                            existingCoupon.count += newCoupon.count;
                         } else {
-                            existingEntry.details[bank].push(newCoupon); // 新增種類
+                            existingEntry.details[bank].push(newCoupon);
                         }
                     });
                 }
@@ -274,17 +272,12 @@
             
             inputs.forEach(i => i.value = '');
             document.getElementById('filter-user').value = 'all';
-            
-            // 發送 Update API 到 Google 雲端
             apiCall({ action: 'update', id: existingEntry.id, details: existingEntry.details }, '✅ 同日期紀錄已自動合併！');
 
         } else {
-            // 完全新的紀錄
             const entry = { user, date, details: tempDetails, id: Date.now() };
             inputs.forEach(i => i.value = '');
             document.getElementById('filter-user').value = 'all';
-            
-            // 發送 Save API 到 Google 雲端
             apiCall({ action: 'save', entry: entry }, '✅ 紀錄已成功上傳雲端！');
         }
     }
@@ -323,7 +316,6 @@
             const cardClass = isExpired ? 'card history-card expired' : 'card history-card';
             const viewBtnClass = isExpired ? 'btn-view expired' : 'btn-view';
             
-            // 首頁列表仍顯示已過期字眼，讓使用者知道餘額被清零
             const remainHtml = isExpired 
                 ? `<div class="history-expired-data">狀態：本期已過期 (清零)</div>`
                 : `<div class="history-active-data">剩餘可用: MOP ${itemRemainD} <span style="color:#666; font-size:0.85rem; font-weight:normal; margin-left:5px;">(尚需消費: MOP ${itemRemainS})</span></div>`;
@@ -380,7 +372,6 @@
                     </div>
                     <div class="detail-actions">`;
                 
-                // 無論是否過期，明細內部完全保留按鈕與狀態
                 if(remain > 0) { 
                     bankHtml += `<button class="btn-use" onclick="markCoupon(${entry.id}, '${bank}', ${index}, 1)">用1張</button>`; 
                 } else { 
@@ -395,7 +386,6 @@
             bankHtml += `</div>`; body.innerHTML += bankHtml;
         }
 
-        // 若為已過期資料，底部新增專屬的結算面板
         if (isExpired) {
             body.innerHTML += `
             <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px; border: 1px dashed #cbd5e0; text-align: center;">
@@ -419,7 +409,6 @@
         renderHistory(); 
         showDetails(id); 
 
-        // 背景傳送更新到雲端
         apiCall({ action: 'update', id: id, details: myData[entryIndex].details }, null);
     }
 
